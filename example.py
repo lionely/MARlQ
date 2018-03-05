@@ -6,16 +6,40 @@ Created on Fri Feb 16 11:26:15 2018
 @author: NewType
 """
 
-import gym 
+import gym
+import numpy as np
 
 env = gym.make('SuperMarioBros-1-1-Tiles-v0')# remember need to make the environment each time
 observation = env.reset()
-for _ in range(1):
+action = [0, 0, 0 , 1, 0, 0]
+print("START", end="")
+for i in range(1000):
     env.render()
-    action = env.action_space.sample() # your agent here (this takes random actions)
+
     observation, reward, done, info = env.step(action)
 #env.reset()
-    print(observation)
+    print("________observation________")
+    #print(observation)
+    marioPosY, marioPosX = np.where(observation == 3)
+    if marioPosX.size != 0:
+        #print("i: " , i ," mario location index: X==", marioPosX.item(0), " Y==", marioPosY.item(0))
+        marioPosX = marioPosX.item(0)
+        marioPosY = marioPosY.item(0)
+        print("i: " , i ," mario location index: X==", marioPosX, " Y==", marioPosY)
+
+        
+    twoRight = observation[marioPosY, marioPosX + 2]
+    print("twoRight : ", twoRight)
+    
+    if observation[marioPosY, marioPosX + 2] != 0:
+        # [Up, L, Down, R, A(JUMP), B]
+        action =[0, 0, 0 , 1, 1, 0]
+        #env.step(action)
+    else:
+        action = [0, 0, 0, 1, 0, 0]
+    
+        
+print("DONE", end="")
 env.close()#closes game
 
 
