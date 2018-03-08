@@ -27,7 +27,7 @@ for i in range(1000):
         marioPosY = marioPosY.item(0)
         print("i: " , i ," mario location index: X==", marioPosX, " Y==", marioPosY)
 
-        
+        #lolol
     twoRight = observation[marioPosY, marioPosX + 2]
     print("twoRight : ", twoRight)
     
