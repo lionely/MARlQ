@@ -8,48 +8,157 @@ Created on Fri Feb 16 11:26:15 2018
 
 import gym
 import numpy as np
+import pickle
+import glob
+import sys
+import os
+import itertools
+import random
+
+
 
 env = gym.make('SuperMarioBros-1-1-Tiles-v0')# remember need to make the environment each time
-observation = env.reset()
-action = [0, 0, 0 , 1, 0, 0]
-print("START", end="")
-for i in range(1000):
-    env.render()
 
-    observation, reward, done, info = env.step(action)
-#env.reset()
-    print("________observation________")
-    #print(observation)
-    marioPosY, marioPosX = np.where(observation == 3)
-    if marioPosX.size != 0:
-        #print("i: " , i ," mario location index: X==", marioPosX.item(0), " Y==", marioPosY.item(0))
-        marioPosX = marioPosX.item(0)
-        marioPosY = marioPosY.item(0)
-        print("i: " , i ," mario location index: X==", marioPosX, " Y==", marioPosY)
-
-        #lolol
-    twoRight = observation[marioPosY, marioPosX + 2]
-    print("twoRight : ", twoRight)
+def bruteForcePolicy(env):
+    observation = env.reset()
+    action = [0, 0, 0 , 1, 0, 0]
+    print("START")
+    for i in range(10):
+        env.render()
     
-    if observation[marioPosY, marioPosX + 2] != 0:
-        # [Up, L, Down, R, A(JUMP), B]
-        action =[0, 0, 0 , 1, 1, 0]
-        #env.step(action)
+        observation, reward, done, info = env.step(action)
+        print("Info has the distance: ",type(info['distance']))
+    #env.reset()
+        print("________observation________")
+        #print(observation)
+        marioPosY, marioPosX = np.where(observation == 3)
+        if marioPosX.size != 0:
+            #print("i: " , i ," mario location index: X==", marioPosX.item(0), " Y==", marioPosY.item(0))
+            marioPosX = marioPosX.item(0)
+            marioPosY = marioPosY.item(0)
+            print("i: " , i ," mario location index: X==", marioPosX, " Y==", marioPosY)
+    
+            #lolol
+        twoRight = observation[marioPosY, marioPosX + 2]
+        print("twoRight : ", twoRight)
+    
+        if observation[marioPosY, marioPosX + 2] != 0:
+            # [Up, L, Down, R, A(JUMP), B]
+            action =[0, 0, 0 , 1, 1, 0]
+            #env.step(action)
+        else:
+            action = [0, 0, 0, 1, 0, 0]
+    print("DONE")
+    env.close()#closes game
+##################################################################################################################################
+
+#TODO Is there a better way to search for extensions with pickle?
+def hasPickle():
+    database = filter(os.path.isfile, glob.glob('./*.pickle'))
+    if database:
+        return True
     else:
-        action = [0, 0, 0, 1, 0, 0]
+        return False
+
+#File name based on furthest distance,nb_episodes
+#https://stackoverflow.com/questions/11218477/how-can-i-use-pickle-to-save-a-dict
+def saveQ(Q,num_episodes):
+    with open('q_' + str(len(Q)) +'_'+str(num_episodes)+'.pickle', 'wb') as handle:
+        pickle.dump(Q, handle, protocol=pickle.HIGHEST_PROTOCOL)
     
-        
-print("DONE", end="")
-env.close()#closes game
+def loadQ(filename):
+    with open(filename, 'rb') as handle:
+        unserialized_data = pickle.load(handle)
+    return unserialized_data
+#TODO if there is a better please change it :D
+#https://stackoverflow.com/questions/9492481/check-that-a-type-of-file-exists-in-python
+def loadLatest():
+    distance_stamps = []
+    for file in glob.glob("*.pickle"):
+        f_name = str(file)
+        #Most recent is defined as the one that makes it the furtherest distance.
+        d_stamp = f_name[2:]
+        end_ = d_stamp.index('_')
+        distance_stamps.append(d_stamp[:end_])
+    max_d_stamp = max(distance_stamps)
+    for file in glob.glob("*.pickle"):
+        f_name = str(file)
+        if max_d_stamp in f_name:
+            break
+    print("Loaded: " + f_name)
+    return loadQ(f_name)
+
+"""alpha is the learning rate, gamma the discount factor, closer value in range [0,1] closer to 1 means it considers future rewards.
+ key for state is distance. values is a dict with possbile actions, initilzaed to probability of 0.
+q_table = {'x': {'up':0, 'L':0, 'down':0,'R':0,'JUMP':0,'B':0 }}
+where x is an integer measuring Mario's distance from the goal.
+These q values will be updated based on the q function. """
+def q_learning(env, num_episodes, alpha=0.85, discount_factor=0.99):
+    # decaying epsilon, i.e we will divide num of episodes passed
+    epsilon = 1.0
+    
+    #call setdefault for a new state.
+    if hasPickle():
+        Q = loadLatest()
+    else:
+        Q = {0: {'up':0, 'L':0, 'down':0,'R':0,'JUMP':0,'B':0 }}
+    action = [0, 0, 0 , 0, 0, 0] #Do nothing
+    action_dict = {'up': [1, 0, 0 ,0, 0, 0],
+                   'L':[0, 1, 0 , 0, 0, 0],
+                   'down':[0, 0, 1 , 0, 0, 0],
+                   'R':[0, 0, 0 , 1, 0, 0],
+                   'JUMP':[0, 0, 0 , 0, 1, 0],
+                   'B':[0, 0, 0 , 0, 0, 1]}
+    
+    for episode in range(num_episodes):
+        observation = env.reset()
+        observation,reward,done,info = env.step(action)
+        state = info['distance']
+        # https://www.codecademy.com/en/forum_questions/51ae28cf01033cc6d200497d
+        Q.setdefault(state, {'up':0, 'L':0, 'down':0,'R':0,'JUMP':0,'B':0 })
+        # itertools.count() is similar to 'while True:' but can break for testing based on t
+        for t in itertools.count():
+            # generate a random num between 0 and 1 e.g. 0.35, 0.73 etc..
+            # if the generated num is smaller than epsilon, we follow exploration policy 
+            if np.random.random() <= epsilon:
+                # select a random action from set of all actions
+                max_q_action = random.choice(Q[state].keys()) # done to use action name later
+                action = action_dict[str(max_q_action)]
+            # if the generated num is greater than epsilon, we follow exploitation policy
+            else:
+                # select an action with highest value for current state
+                max_q_action =  max(Q[state], key=lambda key: Q[state][key]) #not fully sure about lambdas >.< https://stackoverflow.com/questions/268272/getting-key-with-maximum-value-in-dictionary
+                action = action_dict[str(max_q_action)]
+            # apply selected action, collect values for next_state and reward
+           
+            
+            observation, reward, done, info = env.step(action)
+            next_state = info['distance']
+            Q.setdefault(next_state, {'up':0, 'L':0, 'down':0,'R':0,'JUMP':0,'B':0 })
+            max_next_state_action = max(Q[next_state], key=lambda key: Q[next_state][key])
+            # Calculate the Q-learning target value
+            Q_target = reward + discount_factor*Q[next_state][max_next_state_action]
+            # Calculate the difference/error between target and current Q
+            Q_delta = Q_target - Q[state][str(max_q_action)]
+            # Update the Q table, alpha is the learning rate
+            Q[state][str(max_q_action)] = Q[state][str(max_q_action)] + (alpha * Q_delta)
+            
+            # break if done, i.e. if end of this episode
+            if done:
+                break
+            # make the next_state into current state as we go for next iteration
+            state = next_state
+        # gradualy decay the epsilon
+        if epsilon > 0.1:
+            epsilon -= 1.0/num_episodes
+    saveQ(Q,num_episodes)
+    return Q    # return optimal Q
+
+Q = q_learning(env,100)
 
 
-#env = gym.make('SuperMarioBros-1-1-Tiles-v0')
-#observation = env.reset()
-#done = False
-#t = 0
-#while not done:
-#    action = env.action_space.sample()  # choose random action
-#    observation, reward, done, info = env.step(action)  # feedback from environment
-#    t += 1
-#    if not t % 100:
-#        print(t, info)
+
+#loaded_Q2 = loadLatest()
+#loaded_Q = loadQ('q_248_10.pickle')
+#assert(loaded_Q==Q)
+
