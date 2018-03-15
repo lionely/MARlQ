@@ -15,8 +15,6 @@ import os
 import itertools
 import random
 
-
-
 env = gym.make('SuperMarioBros-1-1-Tiles-v0')# remember need to make the environment each time
 
 def bruteForcePolicy(env):
@@ -25,7 +23,7 @@ def bruteForcePolicy(env):
     print("START")
     for i in range(10):
         env.render()
-    
+
         observation, reward, done, info = env.step(action)
         print("Info has the distance: ",type(info['distance']))
     #env.reset()
@@ -37,11 +35,11 @@ def bruteForcePolicy(env):
             marioPosX = marioPosX.item(0)
             marioPosY = marioPosY.item(0)
             print("i: " , i ," mario location index: X==", marioPosX, " Y==", marioPosY)
-    
+
             #lolol
         twoRight = observation[marioPosY, marioPosX + 2]
         print("twoRight : ", twoRight)
-    
+
         if observation[marioPosY, marioPosX + 2] != 0:
             # [Up, L, Down, R, A(JUMP), B]
             action =[0, 0, 0 , 1, 1, 0]
@@ -65,7 +63,7 @@ def hasPickle():
 def saveQ(Q, num_episodes):
     with open('q_' + str(len(Q)) +'_'+str(num_episodes)+'.pickle', 'wb') as handle:
         pickle.dump(Q, handle, protocol=pickle.HIGHEST_PROTOCOL)
-    
+
 def loadQ(filename):
     with open(filename, 'rb') as handle:
         unserialized_data = pickle.load(handle)
@@ -88,18 +86,20 @@ def loadLatest():
             break
     print("Loaded: " + f_name)
     return loadQ(f_name)
-
-"""alpha is the learning rate, gamma the discount factor, closer value in range [0,1] closer to 1 means
-it considers future rewards. key for state is distance. values is a dict with possbile actions, initilzaed
-to probability of 0. q_table = {'x': {'up':0, 'L':0, 'down':0, 'R':0, 'JUMP':0, 'B':0 }} where x is an
-integer measuring Mario's distance from the goal. These q values will be updated based on the q function. """
+#Should hold down jump, to be able to jump higher."
+"""alpha is the learning rate, gamma the discount factor, closer value in range [0,1] closer to 1 means it considers future rewards.
+ key for state is distance. values is a dict with possbile actions, initilzaed to probability of 0.
+q_table = {'x': {'up':0, 'L':0, 'down':0,'R':0,'JUMP':0,'B':0 }}
+where x is an integer measuring Mario's distance from the goal.
+These q values will be updated based on the q function. """
 def q_learning(env, num_episodes, alpha=0.85, discount_factor=0.99):
     # decaying epsilon, i.e we will divide num of episodes passed
     epsilon = 1.0
-    
+    standing_penalty = 0.08
     #call setdefault for a new state.
     if hasPickle():
         Q = loadLatest()
+
     else:
         Q = {0: {'up':0, 'L':0, 'down':0,'R':0,'JUMP':0,'B':0 }}
     action = [0, 0, 0, 0, 0, 0] #Do nothing
@@ -109,8 +109,9 @@ def q_learning(env, num_episodes, alpha=0.85, discount_factor=0.99):
                    'R':     [0, 0, 0 , 1, 0, 0],
                    'JUMP':  [0, 0, 0 , 0, 1, 0],
                    'B':     [0, 0, 0 , 0, 0, 1]}
-    
+
     for episode in range(num_episodes):
+        print("Starting episode: ",episode)
         observation = env.reset()
         observation,reward,done,info = env.step(action)
         state = info['distance']
@@ -119,7 +120,7 @@ def q_learning(env, num_episodes, alpha=0.85, discount_factor=0.99):
         # itertools.count() is similar to 'while True:' but can break for testing based on t
         for t in itertools.count():
             # generate a random num between 0 and 1 e.g. 0.35, 0.73 etc..
-            # if the generated num is smaller than epsilon, we follow exploration policy 
+            # if the generated num is smaller than epsilon, we follow exploration policy
             if np.random.random() <= epsilon:
                 # select a random action from set of all actions
                 #max_q_action = random.choice(Q[state].keys())      # done to use action name later
@@ -133,8 +134,8 @@ def q_learning(env, num_episodes, alpha=0.85, discount_factor=0.99):
                 max_q_action =  max(Q[state], key=(lambda key: Q[state][key])) #not fully sure about lambdas >.< https://stackoverflow.com/questions/268272/getting-key-with-maximum-value-in-dictionary
                 action = action_dict[str(max_q_action)]
             # apply selected action, collect values for next_state and reward
-           
-            
+
+
             observation, reward, done, info = env.step(action)
             next_state = info['distance']
             Q.setdefault(next_state, {'up':0, 'L':0, 'down':0, 'R':0, 'JUMP':0, 'B':0 })
@@ -142,10 +143,10 @@ def q_learning(env, num_episodes, alpha=0.85, discount_factor=0.99):
             # Calculate the Q-learning target value
             Q_target = reward + discount_factor*Q[next_state][max_next_state_action]
             # Calculate the difference/error between target and current Q
-            Q_delta = Q_target - Q[state][str(max_q_action)]
+            Q_delta = Q_target - Q[state][str(max_q_action)] - standing_penalty
             # Update the Q table, alpha is the learning rate
             Q[state][str(max_q_action)] = Q[state][str(max_q_action)] + (alpha * Q_delta)
-            
+
             # break if done, i.e. if end of this episode
             if done:
                 break
@@ -155,10 +156,56 @@ def q_learning(env, num_episodes, alpha=0.85, discount_factor=0.99):
         if epsilon > 0.1:
             epsilon -= 1.0/num_episodes
     saveQ(Q,num_episodes)
+    env.close()
     return Q    # return optimal Q
 
 #Q = q_learning(env,100)
 
+def test_algorithm(env,Q):
+    stuck_capacity = 5
+    stuck = []
+
+    observation = env.reset()
+    total_reward = 0
+    action = [0]*6
+    observation,reward,done,info = env.step(action)
+    state = info['distance']
+    action_dict = {'up': [1, 0, 0 ,0, 0, 0],
+                   'L':[0, 1, 0 , 0, 0, 0],
+                   'down':[0, 0, 1 , 0, 0, 0],
+                   'R':[0, 0, 0 , 1, 0, 0],
+                   'JUMP':[0, 0, 0 , 0, 1, 0],
+                   'B':[0, 0, 0 , 0, 0, 1]}
+    for t in itertools.count():
+        # selection the action with highest values i.e. best action
+        max_q_action = max(Q[state], key=lambda key: Q[state][key])
+#        if len(stuck)<stuck_capacity:
+#            stuck.append(max_q_action)
+#        stuck = [] if t%10==0 else stuck
+        #print('t is ',t )
+#        if isStuck(stuck,stuck_capacity):
+#            print('is stuck :(')
+#            max_q_action = 'R' #random.choice(Q[state].keys())
+#            stuck = []
+        print("Optimal action is: " + max_q_action)
+        action = action_dict[str(max_q_action)]
+        print("Action is: " , action)
+        # apply selected action
+        observation, reward, done,info = env.step(action)
+        print("Reward: ",reward)
+        next_state = info['distance']
+        # calculate total reward
+        total_reward += reward
+        if done:
+            print(total_reward)
+            break
+        state = next_state
+    return total_reward
+
+def isStuck(stuck,capacity):
+    if len(stuck) == capacity:
+        stuck = []
+    return len(np.unique(stuck)) == 1
 
 if __name__ == "__main__":
     Q = q_learning(env, 100)
@@ -166,4 +213,3 @@ if __name__ == "__main__":
     #loaded_Q2 = loadLatest()
     #loaded_Q = loadQ('q_248_10.pickle')
     #assert(loaded_Q==Q)
-
