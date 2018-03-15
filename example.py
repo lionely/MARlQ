@@ -60,9 +60,9 @@ def hasPickle():
     else:
         return False
 
-#File name based on furthest distance,nb_episodes
+#File name based on furthest distance, nb_episodes (q_furthestDistance_numEpisode.pickle)
 #https://stackoverflow.com/questions/11218477/how-can-i-use-pickle-to-save-a-dict
-def saveQ(Q,num_episodes):
+def saveQ(Q, num_episodes):
     with open('q_' + str(len(Q)) +'_'+str(num_episodes)+'.pickle', 'wb') as handle:
         pickle.dump(Q, handle, protocol=pickle.HIGHEST_PROTOCOL)
     
@@ -74,7 +74,8 @@ def loadQ(filename):
 #https://stackoverflow.com/questions/9492481/check-that-a-type-of-file-exists-in-python
 def loadLatest():
     distance_stamps = []
-    for file in glob.glob("*.pickle"):
+    # for file in _glob.glob("*.pickle"):   #PYTHON2
+    for file in glob.glob("*.pickle"):      #PYTHON3    https://stackoverflow.com/questions/44366614/nameerror-name-glob-is-not-defined
         f_name = str(file)
         #Most recent is defined as the one that makes it the furtherest distance.
         d_stamp = f_name[2:]
@@ -88,11 +89,10 @@ def loadLatest():
     print("Loaded: " + f_name)
     return loadQ(f_name)
 
-"""alpha is the learning rate, gamma the discount factor, closer value in range [0,1] closer to 1 means it considers future rewards.
- key for state is distance. values is a dict with possbile actions, initilzaed to probability of 0.
-q_table = {'x': {'up':0, 'L':0, 'down':0,'R':0,'JUMP':0,'B':0 }}
-where x is an integer measuring Mario's distance from the goal.
-These q values will be updated based on the q function. """
+"""alpha is the learning rate, gamma the discount factor, closer value in range [0,1] closer to 1 means
+it considers future rewards. key for state is distance. values is a dict with possbile actions, initilzaed
+to probability of 0. q_table = {'x': {'up':0, 'L':0, 'down':0, 'R':0, 'JUMP':0, 'B':0 }} where x is an
+integer measuring Mario's distance from the goal. These q values will be updated based on the q function. """
 def q_learning(env, num_episodes, alpha=0.85, discount_factor=0.99):
     # decaying epsilon, i.e we will divide num of episodes passed
     epsilon = 1.0
@@ -102,13 +102,13 @@ def q_learning(env, num_episodes, alpha=0.85, discount_factor=0.99):
         Q = loadLatest()
     else:
         Q = {0: {'up':0, 'L':0, 'down':0,'R':0,'JUMP':0,'B':0 }}
-    action = [0, 0, 0 , 0, 0, 0] #Do nothing
-    action_dict = {'up': [1, 0, 0 ,0, 0, 0],
-                   'L':[0, 1, 0 , 0, 0, 0],
-                   'down':[0, 0, 1 , 0, 0, 0],
-                   'R':[0, 0, 0 , 1, 0, 0],
-                   'JUMP':[0, 0, 0 , 0, 1, 0],
-                   'B':[0, 0, 0 , 0, 0, 1]}
+    action = [0, 0, 0, 0, 0, 0] #Do nothing
+    action_dict = {'up':    [1, 0, 0 ,0, 0, 0],
+                   'L':     [0, 1, 0 , 0, 0, 0],
+                   'down':  [0, 0, 1 , 0, 0, 0],
+                   'R':     [0, 0, 0 , 1, 0, 0],
+                   'JUMP':  [0, 0, 0 , 0, 1, 0],
+                   'B':     [0, 0, 0 , 0, 0, 1]}
     
     for episode in range(num_episodes):
         observation = env.reset()
@@ -122,19 +122,22 @@ def q_learning(env, num_episodes, alpha=0.85, discount_factor=0.99):
             # if the generated num is smaller than epsilon, we follow exploration policy 
             if np.random.random() <= epsilon:
                 # select a random action from set of all actions
-                max_q_action = random.choice(Q[state].keys()) # done to use action name later
+                #max_q_action = random.choice(Q[state].keys())      # done to use action name later
+                                                                    # PYTHON2
+                max_q_action = random.choice(list(Q[state].keys())) # PYTHON3
+
                 action = action_dict[str(max_q_action)]
             # if the generated num is greater than epsilon, we follow exploitation policy
             else:
                 # select an action with highest value for current state
-                max_q_action =  max(Q[state], key=lambda key: Q[state][key]) #not fully sure about lambdas >.< https://stackoverflow.com/questions/268272/getting-key-with-maximum-value-in-dictionary
+                max_q_action =  max(Q[state], key=(lambda key: Q[state][key])) #not fully sure about lambdas >.< https://stackoverflow.com/questions/268272/getting-key-with-maximum-value-in-dictionary
                 action = action_dict[str(max_q_action)]
             # apply selected action, collect values for next_state and reward
            
             
             observation, reward, done, info = env.step(action)
             next_state = info['distance']
-            Q.setdefault(next_state, {'up':0, 'L':0, 'down':0,'R':0,'JUMP':0,'B':0 })
+            Q.setdefault(next_state, {'up':0, 'L':0, 'down':0, 'R':0, 'JUMP':0, 'B':0 })
             max_next_state_action = max(Q[next_state], key=lambda key: Q[next_state][key])
             # Calculate the Q-learning target value
             Q_target = reward + discount_factor*Q[next_state][max_next_state_action]
@@ -154,11 +157,13 @@ def q_learning(env, num_episodes, alpha=0.85, discount_factor=0.99):
     saveQ(Q,num_episodes)
     return Q    # return optimal Q
 
-Q = q_learning(env,100)
+#Q = q_learning(env,100)
 
 
+if __name__ == "__main__":
+    Q = q_learning(env, 100)
 
-#loaded_Q2 = loadLatest()
-#loaded_Q = loadQ('q_248_10.pickle')
-#assert(loaded_Q==Q)
+    #loaded_Q2 = loadLatest()
+    #loaded_Q = loadQ('q_248_10.pickle')
+    #assert(loaded_Q==Q)
 
