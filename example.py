@@ -189,7 +189,8 @@ def q_learning(env, num_episodes, alpha=0.85, discount_factor=0.99):
     return Q    # return optimal Q
 
 
-#TODO: make a ql_with(env, num_episodes, ...) function that takes a list of info variables that we would like to consider
+
+
 """Q-learning with distance and score.
 """
 #workerd on this instead of ql_box because accounting for a boxed (limited) environment means that the policy would not be a reinforced-learning?
@@ -260,6 +261,90 @@ def ql_distScore(env, num_episodes, alpha=0.85, discount_factor=0.99):
     return Q  # return optimal Q
 
 
+"""Q-learning with box as a state. The box size will be 2 blocks away from Mario as a default.
+"""
+#workerd on this instead of ql_box because accounting for a boxed (limited) environment means that the policy would not be a reinforced-learning?
+def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
+    # decaying epsilon, i.e we will divide num of episodes passed
+    epsilon = 1.0
+
+    # call setdefault for a new state.
+    if hasPickleWith("ql_box"):
+        Q = loadLatestWith("ql_box")
+    else:
+        Q = {0: {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0}}
+    action = [0, 0, 0, 0, 0, 0]  # Do nothing
+    action_dict = {'up':    [1, 0, 0, 0, 0, 0],
+                   'L':     [0, 1, 0, 0, 0, 0],
+                   'down':  [0, 0, 1, 0, 0, 0],
+                   'R':     [0, 0, 0, 1, 0, 0],
+                   'JUMP':  [0, 0, 0, 0, 1, 0],
+                   'B':     [0, 0, 0, 0, 0, 1]}
+
+    for episode in range(num_episodes):
+        observation = env.reset()
+        observation, reward, done, info = env.step(action)
+        #state = info['distance'] + info['score'] # adds the distance and score...
+
+        #get the box
+        marioPosY, marioPosX = np.where(observation == 3)   #mario position
+        if marioPosX.size != 0:
+            # print("i: " , i ," mario location index: X==", marioPosX.item(0), " Y==", marioPosY.item(0))
+            marioPosX = marioPosX.item(0)
+            marioPosY = marioPosY.item(0)
+
+        box = []
+        for i in range(-boxSize,boxSize+1):
+            box.append(marioPosY+i)
+            for j in range(-boxSize, boxSize+1):
+                box.append(marioPosX+j)
+        state = box
+
+        #TODO: Fix an error that occurs because state is a list (TypeError: unhashable type: 'list')
+        Q.setdefault(state, {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0})
+
+        for t in itertools.count():
+            # generate a random num between 0 and 1 e.g. 0.35, 0.73 etc..
+            # if the generated num is smaller than epsilon, we follow exploration policy
+            if np.random.random() <= epsilon:
+                # select a random action from set of all actions
+                # max_q_action = random.choice(Q[state].keys())      # PYTHON2
+                max_q_action = random.choice(list(Q[state].keys()))  # PYTHON3
+
+                action = action_dict[str(max_q_action)]
+            # if the generated num is greater than epsilon, we follow exploitation policy
+            else:
+                # select an action with highest value for current state
+                max_q_action = max(Q[state], key=(lambda key: Q[state][key]))
+                # not fully sure about lambdas >.< https://stackoverflow.com/questions/268272/getting-key-with-maximum-value-in-dictionary
+
+                action = action_dict[str(max_q_action)]
+            # apply selected action, collect values for next_state and reward
+
+
+            observation, reward, done, info = env.step(action)
+            next_state = info['distance'] + info['score']
+            Q.setdefault(next_state, {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0})
+            max_next_state_action = max(Q[next_state], key=lambda key: Q[next_state][key])
+            # Calculate the Q-learning target value
+            Q_target = reward + discount_factor * Q[next_state][max_next_state_action]
+            # Calculate the difference/error between target and current Q
+            Q_delta = Q_target - Q[state][str(max_q_action)]
+            # Update the Q table, alpha is the learning rate
+            Q[state][str(max_q_action)] = Q[state][str(max_q_action)] + (alpha * Q_delta)
+
+            # break if done, i.e. if end of this episode
+            if done:
+                break
+            # make the next_state into current state as we go for next iteration
+            state = next_state
+        # gradualy decay the epsilon
+        if epsilon > 0.1:
+            epsilon -= 1.0 / num_episodes
+    saveQ(Q, num_episodes, functionName='ql_box')
+    return Q  # return optimal Q
+
+
 def test_algorithm(env,Q):
     stuck_capacity = 5
     stuck = []
@@ -309,7 +394,10 @@ def isStuck(stuck,capacity):
 if __name__ == "__main__":
     env = gym.make('SuperMarioBros-1-1-Tiles-v0')  # remember need to make the environment each time
 
-    Q = ql_distScore(env, 10)
+    Q = ql_box(env, 5)
+
+    #Q = ql_distScore(env, 10)
+
     #Q = q_learning(env, 5)
     #loaded_Q2 = loadLatest()
     #loaded_Q = loadQ('q_248_10.pickle')
