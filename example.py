@@ -331,6 +331,11 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
         Reloaded modules: wrappers, wrappers.action_space, wrappers.control
         [2018-03-16 14:48:35,261] Making new env: SuperMarioBros-1-1-Tiles-v0
         Loaded: ql_box_51_1.pickle
+        
+    saved: ql_box_75_10.pickle
+        Reloaded modules: wrappers, wrappers.action_space, wrappers.control
+        [2018-03-16 15:03:24,828] Making new env: SuperMarioBros-1-1-Tiles-v0
+        Loaded: ql_box_56_4.pickle
     """
     
     return Q  # return optimal Q
@@ -407,7 +412,7 @@ def isStuck(stuck,capacity):
 if __name__ == "__main__":
     env = gym.make('SuperMarioBros-1-1-Tiles-v0')  # remember need to make the environment each time
 
-    Q = ql_box(env, 4)
+    Q = ql_box(env, 10)
 
     #Q = ql_distScore(env, 10)
 
