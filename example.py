@@ -29,12 +29,16 @@ def hasPickleWith(functionName):
 
 #File name based on furthest distance, nb_episodes (q_furthestDistance_numEpisode.pickle)
 #https://stackoverflow.com/questions/11218477/how-can-i-use-pickle-to-save-a-dict
-def saveQ(Q, num_episodes, functionName):
+def saveQ(Q, num_episodes, functionName,boxSize=""):
     # TODO: make num_episodes consider the previous number of episodes as well.
     # For example, if initially done 10 episodes, num_episodes==10.
     # If do 20 more episodes, num_episodes==30.
-    with open(functionName + '_' + str(len(Q)) +'_'+str(num_episodes)+'.pickle', 'wb') as handle:
-        pickle.dump(Q, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    if functionName == 'q_learning':
+        with open(functionName + '_' +str(num_episodes)+'.pickle', 'wb') as handle:
+            pickle.dump(Q, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    else:
+        with open(functionName + '_'+str(num_episodes)+'_'+str(boxSize)+'.pickle', 'wb') as handle:
+            pickle.dump(Q, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 def loadQ(filename):
     with open(filename, 'rb') as handle:
@@ -43,23 +47,39 @@ def loadQ(filename):
 #TODO if there is a better please change it :D
 #https://stackoverflow.com/questions/9492481/check-that-a-type-of-file-exists-in-python
 def loadLatestWith(functionName):
-    distance_stamps = []
+    episode_stamps = []
     f_name = ''
     # for file in _glob.glob("*.pickle"):   #PYTHON2
     for file in glob.glob("*.pickle"):      #PYTHON3    https://stackoverflow.com/questions/44366614/nameerror-name-glob-is-not-defined
-        if functionName in file:
+        if functionName in file and functionName=='q_learning':
             f_name = str(file)
             #Most recent is defined as the one that makes it the furtherest distance.
-            d_stamp = f_name[2:]
-            end_ = d_stamp.index('_')
-            distance_stamps.append(d_stamp[:end_])
-    max_d_stamp = max(distance_stamps)
+            f_name_offset = len(functionName)-1 # to get the index of where it starts
+            e_stamp = f_name[f_name_offset+2:]
+            end_ = e_stamp.index('_')
+            episode_stamps.append(e_stamp[:end_])
+        elif functionName in file:
+            f_name = str(file)
+            box_num = f_name[-1]
+            #Most recent is defined as the one that makes it the furtherest distance.
+            f_name_offset = len(functionName)-1 # to get the index of where it starts
+            e_stamp = f_name[f_name_offset+2:]
+            end_ = e_stamp.index('_')
+            episode_stamps.append(e_stamp[:end_])
+
+    max_e_stamp = max(episode_stamps)
 
     #Why are we looping through twice??
+    #I looped to find the latest pickle then after we found That
+    # we load. There might be a way to load based on the most recent episode. We can look into it!
     for file in glob.glob("*.pickle"):
-        if functionName in file:
+        if functionName in file and functionName=='q_learning':
             f_name = str(file)
-            if max_d_stamp in f_name:
+            if max_e_stamp in f_name:
+                break
+        elif functionName in file and box_num in file:
+            f_name = str(file)
+            if max_e_stamp in f_name:
                 break
     print("Loaded: " + f_name)
     return loadQ(f_name)
@@ -230,7 +250,7 @@ def ql_distScore(env, num_episodes, alpha=0.85, discount_factor=0.99):
 
 """Q-learning with box as a state. The box size will be 2 blocks away from Mario as a default.
 """
-#workerd on this instead of ql_box because accounting for a boxed (limited) environment means that the policy would not be a reinforced-learning?
+#worked on this instead of ql_box because accounting for a boxed (limited) environment means that the policy would not be a reinforced-learning?
 def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
     # decaying epsilon, i.e we will divide num of episodes passed
     epsilon = 1.0
@@ -239,7 +259,7 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
     if hasPickleWith("ql_box"):
         Q = loadLatestWith("ql_box")
     else:
-        # not sure if "0000000000003000000000000" is a correct initial box (state) that is competible to 0
+        # not sure if "0000000000003000000000000" is a correct initial box (state) that is comparable to 0
         Q = {"0000000000003000000000000": {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0}}
         # the state "0000000000003000000000000" represents the box that looks as below
         # 00000
@@ -255,24 +275,24 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
                    'JUMP':  [0, 0, 0, 0, 1, 0],
                    'B':     [0, 0, 0, 0, 0, 1]}
 
-    
+
     for episode in range(num_episodes):
         observation = env.reset()
         observation, reward, done, info = env.step(action)
 
         marioPosY, marioPosX = np.where(observation == 3)   #mario position
-        
-        # in the beginning of the game, when mario's position is not set (that we cannot get
+
+        # in the beginning of the game, when mario's position is not set (that is we cannot get
         # mario's x and y positions using observation), mario moves right
         # TODO: if there is a more elegant way to deal with the beginning of the game (edge case)... go for it!
         while marioPosX.size == 0:
             action = [0, 0, 0, 1, 0, 0]
             observation, reward, done, info = env.step(action)
             marioPosY, marioPosX = np.where(observation == 3)
-        
-        
+
+
         state = getBox(observation, boxSize)
-        
+
         Q.setdefault(state, {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0})
 
         for t in itertools.count():
@@ -282,7 +302,7 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
                 # select a random action from set of all actions
                 # max_q_action = random.choice(Q[state].keys())      # PYTHON2
                 max_q_action = random.choice(list(Q[state].keys()))  # PYTHON3
-                
+
 
                 action = action_dict[str(max_q_action)]
             # if the generated num is greater than epsilon, we follow exploitation policy
@@ -314,55 +334,57 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
         # gradualy decay the epsilon
         if epsilon > 0.1:
             epsilon -= 1.0 / num_episodes
-    
+
     #TODO: ql_box's len(Q) != maximum distance (don't know what it represents) figure out a way to have consistancy between file names.
-    saveQ(Q, num_episodes, functionName='ql_box')
+    saveQ(Q, num_episodes, functionName='ql_box',boxSize=boxSize)
     """
     saved: ql_box_51_5.pickle
         Reloaded modules: wrappers, wrappers.action_space, wrappers.control
         [2018-03-16 14:04:32,550] Making new env: SuperMarioBros-1-1-Tiles-v0
-    
+
     saved: ql_box_51_1.pickle
         Reloaded modules: wrappers, wrappers.action_space, wrappers.control
         [2018-03-16 14:31:44,025] Making new env: SuperMarioBros-1-1-Tiles-v0
         Loaded: ql_box_51_5.pickle
-        
+
     saved: ql_box_56_4.pickle
         Reloaded modules: wrappers, wrappers.action_space, wrappers.control
         [2018-03-16 14:48:35,261] Making new env: SuperMarioBros-1-1-Tiles-v0
         Loaded: ql_box_51_1.pickle
-        
+
     saved: ql_box_75_10.pickle
         Reloaded modules: wrappers, wrappers.action_space, wrappers.control
         [2018-03-16 15:03:24,828] Making new env: SuperMarioBros-1-1-Tiles-v0
         Loaded: ql_box_56_4.pickle
     """
-    
+
     return Q  # return optimal Q
 
 """Returns information of a box surrounding the Mario in str type. Used for ql_box."""
 def getBox(observation, boxSize):
     marioPosY, marioPosX = np.where(observation == 3)
-    
+
     # handle edge case where mario's positions are not given
     if marioPosY.size == 0 or marioPosX.size == 0:
         return "0000000000003000000000000"
-    
-    
+
+
     marioPosX = marioPosX.item(0)
     marioPosY = marioPosY.item(0)
-        
+
     box = ""
     for i in range(-boxSize,boxSize+1):
         for j in range(-boxSize, boxSize+1):
             currBoxPos = observation[marioPosY+i, marioPosX+j]
-            
+
 #                currBoxPos = currBoxPos.item(0)
             box += str(currBoxPos)
 #    print(box)
     return box
 
-#TODO: comment...! What does this test?
+#TODO: Added docustring but this function is not complete yet, will do after we clear level 1.
+"""This function takes an environment and Q table and checks if the optimal actions
+at each state is actually being taken. """
 def test_algorithm(env,Q):
     stuck_capacity = 5
     stuck = []
@@ -403,7 +425,7 @@ def test_algorithm(env,Q):
             break
         state = next_state
     return total_reward
-
+"""Possibly a helper function to test_algorithm"""
 def isStuck(stuck,capacity):
     if len(stuck) == capacity:
         stuck = []
@@ -412,8 +434,9 @@ def isStuck(stuck,capacity):
 if __name__ == "__main__":
     env = gym.make('SuperMarioBros-1-1-Tiles-v0')  # remember need to make the environment each time
 
-    Q = ql_box(env, 10)
-
+    Q = ql_box(env, 1)
+    box_Q = loadLatestWith('ql_box')
+    
     #Q = ql_distScore(env, 10)
 
     #Q = q_learning(env, 5)
