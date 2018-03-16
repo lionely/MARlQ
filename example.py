@@ -53,16 +53,20 @@ def bruteForcePolicy(env):
 
 
 #TODO Is there a better way to search for extensions with pickle?
-def hasPickle():
+def hasPickleWith(functionName):
     database = filter(os.path.isfile, glob.glob('./*.pickle'))
     if database:
-        return True
-    else:
-        return False
+        for file in database:
+            if functionName in file:
+                return True
+    return False
 
 #File name based on furthest distance, nb_episodes (q_furthestDistance_numEpisode.pickle)
 #https://stackoverflow.com/questions/11218477/how-can-i-use-pickle-to-save-a-dict
 def saveQ(Q, num_episodes, functionName):
+    # TODO: make num_episodes consider the previous number of episodes as well.
+    # For example, if initially done 10 episodes, num_episodes==10.
+    # If do 20 more episodes, num_episodes==30.
     with open(functionName + '_' + str(len(Q)) +'_'+str(num_episodes)+'.pickle', 'wb') as handle:
         pickle.dump(Q, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
@@ -72,20 +76,25 @@ def loadQ(filename):
     return unserialized_data
 #TODO if there is a better please change it :D
 #https://stackoverflow.com/questions/9492481/check-that-a-type-of-file-exists-in-python
-def loadLatest():
+def loadLatestWith(functionName):
     distance_stamps = []
+    f_name = ''
     # for file in _glob.glob("*.pickle"):   #PYTHON2
     for file in glob.glob("*.pickle"):      #PYTHON3    https://stackoverflow.com/questions/44366614/nameerror-name-glob-is-not-defined
-        f_name = str(file)
-        #Most recent is defined as the one that makes it the furtherest distance.
-        d_stamp = f_name[2:]
-        end_ = d_stamp.index('_')
-        distance_stamps.append(d_stamp[:end_])
+        if functionName in file:
+            f_name = str(file)
+            #Most recent is defined as the one that makes it the furtherest distance.
+            d_stamp = f_name[2:]
+            end_ = d_stamp.index('_')
+            distance_stamps.append(d_stamp[:end_])
     max_d_stamp = max(distance_stamps)
+
+    #Why are we looping through twice??
     for file in glob.glob("*.pickle"):
-        f_name = str(file)
-        if max_d_stamp in f_name:
-            break
+        if functionName in file:
+            f_name = str(file)
+            if max_d_stamp in f_name:
+                break
     print("Loaded: " + f_name)
     return loadQ(f_name)
 
@@ -108,8 +117,8 @@ def q_learning(env, num_episodes, alpha=0.85, discount_factor=0.99):
     epsilon = 1.0
     standing_penalty = 0.08
     #call setdefault for a new state.
-    if hasPickle():
-        Q = loadLatest()
+    if hasPickleWith("q_learning"):
+        Q = loadLatestWith("q_learning")
 
     else:
         Q = {0: {'up':0, 'L':0, 'down':0,'R':0,'JUMP':0,'B':0 }}
@@ -189,8 +198,8 @@ def ql_distScore(env, num_episodes, alpha=0.85, discount_factor=0.99):
     epsilon = 1.0
 
     # call setdefault for a new state.
-    if hasPickle():
-        Q = loadLatest()
+    if hasPickleWith("ql_distScore"):
+        Q = loadLatestWith("ql_distScore")
     else:
         Q = {0: {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0}}
     action = [0, 0, 0, 0, 0, 0]  # Do nothing
