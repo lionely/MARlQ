@@ -39,13 +39,15 @@ def saveQ(Q, num_episodes, functionName,boxSize=""):
     else:
         with open(functionName + '_'+str(num_episodes)+'_'+str(boxSize)+'.pickle', 'wb') as handle:
             pickle.dump(Q, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
+    print("Saved Q table succesfully for "+str(num_episodes)+" episodes!")
+    return
 def loadQ(filename):
     with open(filename, 'rb') as handle:
         unserialized_data = pickle.load(handle)
     return unserialized_data
 #TODO if there is a better please change it :D
 #https://stackoverflow.com/questions/9492481/check-that-a-type-of-file-exists-in-python
+#returns max ep num as well so we can pick up where w eleft off.
 def loadLatestWith(functionName):
     episode_stamps = []
     f_name = ''
@@ -82,7 +84,7 @@ def loadLatestWith(functionName):
             if max_e_stamp in f_name:
                 break
     print("Loaded: " + f_name)
-    return loadQ(f_name)
+    return  (loadQ(f_name) , int(max_e_stamp) )
 
 def playAsHuman(env, playTime=1000):
     #TODO: make this work...!
@@ -104,7 +106,7 @@ def q_learning(env, num_episodes, alpha=0.85, discount_factor=0.99):
     standing_penalty = 0.08
     #call setdefault for a new state.
     if hasPickleWith("q_learning"):
-        Q = loadLatestWith("q_learning")
+        Q = loadLatestWith("q_learning")[0]
 
     else:
         Q = {0: {'up':0, 'L':0, 'down':0,'R':0,'JUMP':0,'B':0 }}
@@ -171,7 +173,7 @@ def q_learning(env, num_episodes, alpha=0.85, discount_factor=0.99):
         if epsilon > 0.1:
             epsilon -= 1.0/num_episodes
 
-    saveQ(Q,num_episodes, functionName='q_leaning')
+    saveQ(Q,num_episodes, functionName='q_learning')
     env.close()
     return Q    # return optimal Q
 
@@ -187,7 +189,7 @@ def ql_distScore(env, num_episodes, alpha=0.85, discount_factor=0.99):
 
     # call setdefault for a new state.
     if hasPickleWith("ql_distScore"):
-        Q = loadLatestWith("ql_distScore")
+        Q = loadLatestWith("ql_distScore")[0]
     else:
         Q = {0: {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0}}
     action = [0, 0, 0, 0, 0, 0]  # Do nothing
@@ -254,10 +256,12 @@ def ql_distScore(env, num_episodes, alpha=0.85, discount_factor=0.99):
 def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
     # decaying epsilon, i.e we will divide num of episodes passed
     epsilon = 1.0
-
+    last_episode = 0 #This is so we can run episodes in batches because running many at once takes a lot of time!
+    
     # call setdefault for a new state.
     if hasPickleWith("ql_box"):
-        Q = loadLatestWith("ql_box")
+        Q,last_episode = loadLatestWith("ql_box")
+        
     else:
         # not sure if "0000000000003000000000000" is a correct initial box (state) that is comparable to 0
         Q = {"0000000000003000000000000": {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0}}
@@ -336,7 +340,7 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
             epsilon -= 1.0 / num_episodes
 
     #TODO: ql_box's len(Q) != maximum distance (don't know what it represents) figure out a way to have consistancy between file names.
-    saveQ(Q, num_episodes, functionName='ql_box',boxSize=boxSize)
+    saveQ(Q, num_episodes + last_episode, functionName='ql_box',boxSize=boxSize)
     """
     saved: ql_box_51_5.pickle
         Reloaded modules: wrappers, wrappers.action_space, wrappers.control
