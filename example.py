@@ -3,7 +3,7 @@
 """
 Created on Fri Feb 16 11:26:15 2018
 
-@author: NewType
+@author: Jonathan Scott, Jinyoung Lim, So Jin Oh
 """
 
 import gym
@@ -16,40 +16,6 @@ import itertools
 import random
 import wrappers
 
-"""
-def bruteForcePolicy(env):
-    observation = env.reset()
-    action = [0, 0, 0 , 1, 0, 0]
-    print("START")
-    for i in range(10):
-        env.render()
-
-        observation, reward, done, info = env.step(action)
-        print("Info has the distance: ",type(info['distance']))
-    #env.reset()
-        print("________observation________")
-        #print(observation)
-        marioPosY, marioPosX = np.where(observation == 3)
-        if marioPosX.size != 0:
-            #print("i: " , i ," mario location index: X==", marioPosX.item(0), " Y==", marioPosY.item(0))
-            marioPosX = marioPosX.item(0)
-            marioPosY = marioPosY.item(0)
-            print("i: " , i ," mario location index: X==", marioPosX, " Y==", marioPosY)
-
-            #lolol
-        twoRight = observation[marioPosY, marioPosX + 2]
-        print("twoRight : ", twoRight)
-
-        if observation[marioPosY, marioPosX + 2] != 0:
-            # [Up, L, Down, R, A(JUMP), B]
-            action =[0, 0, 0 , 1, 1, 0]
-            #env.step(action)
-        else:
-            action = [0, 0, 0, 1, 0, 0]
-    print("DONE")
-    env.close()#closes game
-##################################################################################################################################
-"""
 
 
 #TODO Is there a better way to search for extensions with pickle?
@@ -184,6 +150,7 @@ def q_learning(env, num_episodes, alpha=0.85, discount_factor=0.99):
         # gradualy decay the epsilon
         if epsilon > 0.1:
             epsilon -= 1.0/num_episodes
+
     saveQ(Q,num_episodes, functionName='q_leaning')
     env.close()
     return Q    # return optimal Q
@@ -272,7 +239,14 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
     if hasPickleWith("ql_box"):
         Q = loadLatestWith("ql_box")
     else:
-        Q = {0: {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0}}
+        # not sure if "0000000000003000000000000" is a correct initial box (state) that is competible to 0
+        Q = {"0000000000003000000000000": {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0}}
+        # the state "0000000000003000000000000" represents the box that looks as below
+        # 00000
+        # 00000
+        # 00300
+        # 11111
+        # 11111
     action = [0, 0, 0, 0, 0, 0]  # Do nothing
     action_dict = {'up':    [1, 0, 0, 0, 0, 0],
                    'L':     [0, 1, 0, 0, 0, 0],
@@ -281,26 +255,24 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
                    'JUMP':  [0, 0, 0, 0, 1, 0],
                    'B':     [0, 0, 0, 0, 0, 1]}
 
+    
     for episode in range(num_episodes):
         observation = env.reset()
         observation, reward, done, info = env.step(action)
-        #state = info['distance'] + info['score'] # adds the distance and score...
 
-        #get the box
         marioPosY, marioPosX = np.where(observation == 3)   #mario position
-        if marioPosX.size != 0:
-            # print("i: " , i ," mario location index: X==", marioPosX.item(0), " Y==", marioPosY.item(0))
-            marioPosX = marioPosX.item(0)
-            marioPosY = marioPosY.item(0)
-
-        box = []
-        for i in range(-boxSize,boxSize+1):
-            box.append(marioPosY+i)
-            for j in range(-boxSize, boxSize+1):
-                box.append(marioPosX+j)
-        state = box
-
-        #TODO: Fix an error that occurs because state is a list (TypeError: unhashable type: 'list')
+        
+        # in the beginning of the game, when mario's position is not set (that we cannot get
+        # mario's x and y positions using observation), mario moves right
+        # TODO: if there is a more elegant way to deal with the beginning of the game (edge case)... go for it!
+        while marioPosX.size == 0:
+            action = [0, 0, 0, 1, 0, 0]
+            observation, reward, done, info = env.step(action)
+            marioPosY, marioPosX = np.where(observation == 3)
+        
+        
+        state = getBox(observation, boxSize)
+        
         Q.setdefault(state, {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0})
 
         for t in itertools.count():
@@ -310,6 +282,7 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
                 # select a random action from set of all actions
                 # max_q_action = random.choice(Q[state].keys())      # PYTHON2
                 max_q_action = random.choice(list(Q[state].keys()))  # PYTHON3
+                
 
                 action = action_dict[str(max_q_action)]
             # if the generated num is greater than epsilon, we follow exploitation policy
@@ -323,7 +296,7 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
 
 
             observation, reward, done, info = env.step(action)
-            next_state = info['distance'] + info['score']
+            next_state = getBox(observation, boxSize)
             Q.setdefault(next_state, {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0})
             max_next_state_action = max(Q[next_state], key=lambda key: Q[next_state][key])
             # Calculate the Q-learning target value
@@ -341,10 +314,34 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
         # gradualy decay the epsilon
         if epsilon > 0.1:
             epsilon -= 1.0 / num_episodes
+    
+    #TODO: ql_box's len(Q) != maximum distance (don't know what it represents) figure out a way to have consistancy between file names.
     saveQ(Q, num_episodes, functionName='ql_box')
+    
     return Q  # return optimal Q
 
+def getBox(observation, boxSize):
+    marioPosY, marioPosX = np.where(observation == 3)
+    
+    # handle edge case where mario's positions are not given
+    if marioPosY.size == 0 or marioPosX.size == 0:
+        return "0000000000003000000000000"
+    
+    
+    marioPosX = marioPosX.item(0)
+    marioPosY = marioPosY.item(0)
+        
+    box = ""
+    for i in range(-boxSize,boxSize+1):
+        for j in range(-boxSize, boxSize+1):
+            currBoxPos = observation[marioPosY+i, marioPosX+j]
+            
+#                currBoxPos = currBoxPos.item(0)
+            box += str(currBoxPos)
+#    print(box)
+    return box
 
+#TODO: comment...! What does this test?
 def test_algorithm(env,Q):
     stuck_capacity = 5
     stuck = []
@@ -394,7 +391,7 @@ def isStuck(stuck,capacity):
 if __name__ == "__main__":
     env = gym.make('SuperMarioBros-1-1-Tiles-v0')  # remember need to make the environment each time
 
-    Q = ql_box(env, 5)
+    Q = ql_box(env, 1)
 
     #Q = ql_distScore(env, 10)
 
