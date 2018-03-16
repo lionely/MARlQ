@@ -320,6 +320,7 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
     
     return Q  # return optimal Q
 
+"""Returns information of a box surrounding the Mario in str type. Used for ql_box."""
 def getBox(observation, boxSize):
     marioPosY, marioPosX = np.where(observation == 3)
     
