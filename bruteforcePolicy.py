@@ -8,15 +8,9 @@ Created on Fri Mar 16 12:08:05 2018
 
 import gym
 import numpy as np
-import pickle
-import glob
-import sys
-import os
-import itertools
-import random
-import wrappers
 
-def bruteForcePolicy(env):
+def bruteForcePolicy(env, playTime=1000):
+    # TODO: make this run based on time and kill it after the time is over.
     observation = env.reset()
     action = [0, 0, 0 , 1, 0, 0]
     print("START")
@@ -51,7 +45,3 @@ def bruteForcePolicy(env):
 if __name__ == "__main__":
     env = gym.make('SuperMarioBros-1-1-Tiles-v0')  # remember need to make the environment each time
     bruteForcePolicy(env)
-
-    #loaded_Q2 = loadLatest()
-    #loaded_Q = loadQ('q_248_10.pickle')
-    #assert(loaded_Q==Q)
