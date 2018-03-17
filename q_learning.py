@@ -5,6 +5,10 @@ Created on Fri Mar 16 17:38:51 2018
 
 @author: NewType
 """
+import pickle_utilities as pu
+import numpy as np
+import itertools
+import random
 
 """alpha is the learning rate, gamma the discount factor, closer value in range [0,1] closer to 1 means it considers
 future rewards.
@@ -17,7 +21,7 @@ def q_learning(env, num_episodes, alpha=0.85, discount_factor=0.99):
     standing_penalty = 0.08
     #call setdefault for a new state.
     if hasPickleWith("q_learning"):
-        Q = loadLatestWith("q_learning")[0]
+        Q,last_episode = pu.loadLatestWith("q_learning")
 
     else:
         Q = {0: {'up':0, 'L':0, 'down':0,'R':0,'JUMP':0,'B':0 }}
@@ -84,6 +88,6 @@ def q_learning(env, num_episodes, alpha=0.85, discount_factor=0.99):
         if epsilon > 0.1:
             epsilon -= 1.0/num_episodes
 
-    saveQ(Q,num_episodes, functionName='q_learning')
+    pu.saveQ(Q,num_episodes+last_episode, functionName='q_learning')
     env.close()
     return Q    # return optimal Q

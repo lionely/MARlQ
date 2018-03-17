@@ -8,6 +8,8 @@ Created on Fri Mar 16 17:44:59 2018
 
 import pickle_utilities as pu
 import numpy as np
+import itertools
+import random
 
 """Q-learning with box as a state. The box size will be 2 blocks away from Mario as a default.
 """
@@ -100,7 +102,7 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
             epsilon -= 1.0 / num_episodes
 
     #TODO: ql_box's len(Q) != maximum distance (don't know what it represents) figure out a way to have consistancy between file names.
-    saveQ(Q, num_episodes + last_episode, functionName='ql_box',boxSize=boxSize)
+    pu.saveQ(Q, num_episodes + last_episode, functionName='ql_box',boxSize=boxSize)
     """
     saved: ql_box_51_5.pickle
         Reloaded modules: wrappers, wrappers.action_space, wrappers.control

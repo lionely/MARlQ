@@ -5,6 +5,11 @@ Created on Fri Mar 16 17:42:50 2018
 
 @author: NewType
 """
+import pickle_utilities as pu
+import numpy as np
+import itertools
+import random
+
 
 """Q-learning with distance and score.
 """
@@ -15,7 +20,7 @@ def ql_distScore(env, num_episodes, alpha=0.85, discount_factor=0.99):
 
     # call setdefault for a new state.
     if hasPickleWith("ql_distScore"):
-        Q = loadLatestWith("ql_distScore")[0]
+        Q,last_episode = pu.loadLatestWith("ql_distScore")
     else:
         Q = {0: {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0}}
     action = [0, 0, 0, 0, 0, 0]  # Do nothing
@@ -72,5 +77,5 @@ def ql_distScore(env, num_episodes, alpha=0.85, discount_factor=0.99):
         # gradualy decay the epsilon
         if epsilon > 0.1:
             epsilon -= 1.0 / num_episodes
-    saveQ(Q, num_episodes, functionName='ql_distScore')
+    pu.saveQ(Q, num_episodes, functionName='ql_distScore')
     return Q  # return optimal Q

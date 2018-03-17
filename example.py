@@ -7,12 +7,12 @@ Created on Fri Feb 16 11:26:15 2018
 """
 
 import gym
-import numpy 
-import pickle_utilities
+#import numpy 
+#import pickle_utilities
 from ql_box import *
-import itertools
-import random
-import wrappers
+#import itertools
+#import random
+#import wrappers 
 
 def playAsHuman(env, playTime=1000):
     #TODO: make this work...!
