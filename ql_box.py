@@ -106,7 +106,8 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
     #TODO: ql_box's len(Q) != maximum distance (don't know what it represents) figure out a way to have consistancy between file names.
     ep_dist,ep_reward = info['distance'],info['total_reward'] #last recorded distance , last recorded reward from episodes
     pu.saveQ(Q, num_episodes + last_episode, functionName='ql_box',boxSize=boxSize)
-    pu.collectData(num_episodes + last_episode,ep_reward,ep_dist,functionName='ql_box')
+    funcName = 'ql_box_size' + str(boxSize)
+    pu.collectData(num_episodes + last_episode,ep_reward,ep_dist,functionName=funcName)
     env.close()
     return Q  # return optimal Q
 
