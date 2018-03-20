@@ -18,11 +18,11 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
     # decaying epsilon, i.e we will divide num of episodes passed
     epsilon = 1.0
     last_episode = 0 #This is so we can run episodes in batches because running many at once takes a lot of time!
-    
+   
     # call setdefault for a new state.
     if pu.hasPickleWith("ql_box"):
         Q,last_episode = pu.loadLatestWith("ql_box")
-        
+
     else:
         # not sure if "0000000000003000000000000" is a correct initial box (state) that is comparable to 0
         Q = {"0000000000003000000000000": {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0}}
@@ -82,6 +82,8 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
 
 
             observation, reward, done, info = env.step(action)
+           
+            #print("Qbox reward is: "+str(reward))
             next_state = getBox(observation, boxSize)
             Q.setdefault(next_state, {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0})
             max_next_state_action = max(Q[next_state], key=lambda key: Q[next_state][key])
@@ -102,27 +104,9 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
             epsilon -= 1.0 / num_episodes
 
     #TODO: ql_box's len(Q) != maximum distance (don't know what it represents) figure out a way to have consistancy between file names.
+    ep_dist,ep_reward = info['distance'],info['total_reward'] #last recorded distance , last recorded reward from episodes
     pu.saveQ(Q, num_episodes + last_episode, functionName='ql_box',boxSize=boxSize)
-    """
-    saved: ql_box_51_5.pickle
-        Reloaded modules: wrappers, wrappers.action_space, wrappers.control
-        [2018-03-16 14:04:32,550] Making new env: SuperMarioBros-1-1-Tiles-v0
-
-    saved: ql_box_51_1.pickle
-        Reloaded modules: wrappers, wrappers.action_space, wrappers.control
-        [2018-03-16 14:31:44,025] Making new env: SuperMarioBros-1-1-Tiles-v0
-        Loaded: ql_box_51_5.pickle
-
-    saved: ql_box_56_4.pickle
-        Reloaded modules: wrappers, wrappers.action_space, wrappers.control
-        [2018-03-16 14:48:35,261] Making new env: SuperMarioBros-1-1-Tiles-v0
-        Loaded: ql_box_51_1.pickle
-
-    saved: ql_box_75_10.pickle
-        Reloaded modules: wrappers, wrappers.action_space, wrappers.control
-        [2018-03-16 15:03:24,828] Making new env: SuperMarioBros-1-1-Tiles-v0
-        Loaded: ql_box_56_4.pickle
-    """
+    pu.collectData(num_episodes + last_episode,ep_reward,ep_dist,functionName='ql_box')
     env.close()
     return Q  # return optimal Q
 
@@ -147,3 +131,59 @@ def getBox(observation, boxSize):
             box += str(currBoxPos)
 #    print(box)
     return box
+
+#TODO: Added docustring but this function is not complete yet, will do after we clear level 1.
+"""This function takes an environment and Q table and checks if the optimal actions
+at each state is actually being taken. """
+def test_algorithm(env,boxSize=2,Q=None):
+    if not Q:
+        Q = pu.loadLatestWith('ql_box')[0]
+    observation = env.reset()
+    total_reward = 0
+    action = [0]*6
+    observation,reward,done,info = env.step(action)
+    marioPosY, marioPosX = np.where(observation == 3)
+    while marioPosX.size == 0:
+            action = [0, 0, 0, 1, 0, 0]
+            observation, reward, done, info = env.step(action)
+            marioPosY, marioPosX = np.where(observation == 3)
+
+
+    state = getBox(observation, boxSize)
+   
+    action_dict = {'up':    [1, 0, 0 ,0, 0, 0],
+                   'L':     [0, 1, 0, 0, 0, 0],
+                   'down':  [0, 0, 1, 0, 0, 0],
+                   'R':     [0, 0, 0, 1, 0, 0],
+                   'JUMP':  [0, 0, 0, 0, 1, 0],
+                   'B':     [0, 0, 0, 0, 0, 1]}
+    for t in itertools.count():
+        # selection the action with highest values i.e. best action
+        max_q_action = max(Q[state], key=lambda key: Q[state][key])
+        #print("Optimal action is: " + max_q_action)
+        action = action_dict[str(max_q_action)]
+        #print("Action is: " , action)
+        # apply selected action
+        observation, reward, done,info = env.step(action)
+        #print("Q-box reward: "+str(reward))
+        next_state = getBox(observation, boxSize)
+        # calculate total reward
+        total_reward += reward
+        
+#        print('reward is ',reward)
+#        print(info['total_reward'])
+#        print('total_reward var ',total_reward)
+        
+        if done:
+            print(total_reward)
+            break
+        state = next_state
+        #print("This stuck state has q values of: ", Q[state])
+    env.close()
+    return total_reward
+
+"""Possibly a helper function to test_algorithm"""
+def isStuck(stuck,capacity):
+    if len(stuck) == capacity:
+        stuck = []
+    return len(np.unique(stuck)) == 1
