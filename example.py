@@ -10,6 +10,7 @@ import gym
 #import numpy 
 import pickle_utilities as pu
 from ql_box import *
+import sys
 #import itertools
 #import random
 #import wrappers 
@@ -24,14 +25,26 @@ def playAsHuman(env, playTime=1000):
     #env.close()  # closes game
 
 #Should hold down jump, to be able to jump higher."
+    
 
-
+   
 #TODO collect total reward after every 5 episodes, max distance, episodes ran so far
+
+#params: [1]num of batches [2]num of episodes [3]box size
 if __name__ == "__main__":
     env = gym.make('SuperMarioBros-1-1-Tiles-v0')  # remember need to make the environment each time
     #Q = pu.loadQ('ql_box_245_2.pickle')
     #test_algorithm(env)
-    for i in range(1):
-        print(str(i*5) + ' episodes have been run.')
-        Q = ql_box(env, 5, boxSize=3)
+    numBatches = int(sys.argv[1])
+    numEpisodes = int(sys.argv[2])
+    boxSizeEntered = int(sys.argv[3])
+    
+    print('number of batches: ' + str(numBatches) + ', number of episodes: ' +
+          str(numEpisodes) + ', box size: ' + str(boxSizeEntered))
+    for i in range(numBatches):
+        print(str(i*numEpisodes) + ' episodes have been run.')
+        Q = ql_box(env, numEpisodes, boxSize=boxSizeEntered)
+
+
+    
     
