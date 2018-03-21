@@ -16,10 +16,13 @@ import random
 #worked on this instead of ql_box because accounting for a boxed (limited) environment means that the policy would not be a reinforced-learning?
 def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
     # decaying epsilon, i.e we will divide num of episodes passed
-    epsilon = 1.0
+    #epsilon = 1.0
     last_episode = 0 #This is so we can run episodes in batches because running many at once takes a lot of time!
     funcName = "ql_box_size" + str(boxSize)
-    pu.getLastDist(funcName)
+    lastDist = pu.getLastDist(funcName)
+    lastDistProp = lastDist/3266 #what proportion of the entire distance mario got last 3266 is the entire distance for stage 1
+    epsilon = 1.0 - lastDistProp
+    
     #last_dist = pu.getLastDist(funcName)
     
     
@@ -104,9 +107,8 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
                 break
             # make the next_state into current state as we go for next iteration
             state = next_state
-        # gradualy decay the epsilon
-        if epsilon > 0.1:
-            epsilon -= 1.0 / num_episodes
+        # decay epsilon according to the distance
+        epsilon = 1.0 - (info['distance']/3266)
 
     #TODO: ql_box's len(Q) != maximum distance (don't know what it represents) figure out a way to have consistancy between file names.
     ep_dist,ep_reward = info['distance'],info['total_reward'] #last recorded distance , last recorded reward from episodes

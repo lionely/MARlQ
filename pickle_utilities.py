@@ -14,6 +14,8 @@ import pandas as pd
 
 def getLastDist(functionName):
     filename = 'reward_stats/'+functionName+'_reward_stats.csv'
+    if not os.path.isfile(filename): #if there is no previous episodes ran based on the existance of file, return 0 as the last distance
+        return 0
     df = pd.read_csv(filename)
     lastDist = df.iloc[-1]['dist']
     print("Last distance is: " + str(lastDist))
