@@ -94,8 +94,11 @@ def loadLatestWith(functionName):
     return  (loadQ(f_name) , int(max_e_stamp) )
 
 """Saves a csv with Pandas"""
-def collectData(episode_num,reward,dist,functionName):
-    log = {'episode_num': [episode_num] ,'reward': [reward], 'dist': [dist]}
+def collectData(episode_num,reward,dist,epsilon,functionName):
+    log = {'episode_num': [episode_num] ,
+           'reward': [reward], 
+           'dist': [dist],
+           'epsilon':[epsilon]}
     stats_df = pd.DataFrame(data=log)
     filename = 'reward_stats/'+functionName+'_reward_stats.csv'
     if not os.path.isfile(filename):
