@@ -22,12 +22,16 @@ def getLastDist(functionName):
     return lastDist    
 
 #TODO Is there a better way to search for extensions with pickle?
-def hasPickleWith(functionName):
+def hasPickleWith(functionName, boxSize=""):
     database = filter(os.path.isfile, glob.glob('Q-tables/*.pickle'))
     if database:
         for file in database:
-            if functionName in file:
-                return True
+            if ("box" in functionName):
+                if file.startswith(functionName) and file.endswith("_"+str(boxSize)):
+                    return True
+            else:
+                if (functionName in file):
+                    return True
     return False
 
 #File name based on furthest distance, nb_episodes (q_furthestDistance_numEpisode.pickle)
@@ -36,7 +40,7 @@ def saveQ(Q, num_episodes, functionName,boxSize=""):
     # TODO: make num_episodes consider the previous number of episodes as well.
     # For example, if initially done 10 episodes, num_episodes==10.
     # If do 20 more episodes, num_episodes==30.
-    if functionName == 'q_learning':
+    if functionName.startsWith('q_learning'):
         with open('Q-tables/'+functionName + '_' +str(num_episodes)+'.pickle', 'wb') as handle:
             pickle.dump(Q, handle, protocol=2)
     else:

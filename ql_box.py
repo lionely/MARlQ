@@ -32,14 +32,10 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
         Q,last_episode = pu.loadLatestWith("ql_box")
 
     else:
+        box = getDefaultBox(boxSize)
         # not sure if "0000000000003000000000000" is a correct initial box (state) that is comparable to 0
-        Q = {"0000000000003000000000000": {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0}}
-        # the state "0000000000003000000000000" represents the box that looks as below
-        # 00000
-        # 00000
-        # 00300
-        # 11111
-        # 11111
+        Q = {box: {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0}}
+        
     action = [0, 0, 0, 0, 0, 0]  # Do nothing
     action_dict = {'up':    [1, 0, 0, 0, 0, 0],
                    'L':     [0, 1, 0, 0, 0, 0],
@@ -118,13 +114,37 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
     env.close()
     return Q  # return optimal Q
 
+"""Returns a defalut box according to the size of the box."""
+def getDefaultBox(boxSize):
+    strLen = boxSize * boxSize
+    boxToStr = "0" * strLen
+    list(boxToStr)[int(strLen/2)] = "3"
+    #print("boxToStr: " + boxToStr)
+    return str(boxToStr)
+
 """Returns information of a box surrounding the Mario in str type. Used for ql_box."""
 def getBox(observation, boxSize):
     marioPosY, marioPosX = np.where(observation == 3)
 
     # handle edge case where mario's positions are not given
     if marioPosY.size == 0 or marioPosX.size == 0:
-        return "0000000000003000000000000"
+        """ boxSize == 2
+        0 0 0 0 0
+        0 0 0 0 0
+        0 0 3 0 0 --> 5x5 with Mario (3) at boxToStr[12] or boxToStr[int(5*5/2)] of len(boxToStr) == 25
+        0 0 0 0 0
+        0 0 0 0 0
+        """
+        """ boxSize == 3
+        0 0 0 0 0 0 0
+        0 0 0 0 0 0 0
+        0 0 0 0 0 0 0
+        0 0 0 3 0 0 0
+        0 0 0 0 0 0 0 --> 7x7 with Mario (3) at boxToStr[24] or boxToStr[int(7*7/2)] of len(boxToStr) == 7*7
+        0 0 0 0 0 0 0
+        0 0 0 0 0 0 0
+        """
+        return getDefaultBox(boxSize)
 
 
     marioPosX = marioPosX.item(0)
@@ -133,11 +153,20 @@ def getBox(observation, boxSize):
     box = ""
     for i in range(-boxSize,boxSize+1):
         for j in range(-boxSize, boxSize+1):
-            currBoxPos = observation[marioPosY+i, marioPosX+j]
+            #print("marioPosX: " + str(marioPosX) + ", marioPosY: " + str(marioPosY))
+            #print("marioPosX+j: " + str(marioPosX+j) + ", marioPosY+i: " + str(marioPosY+i))
+            #print("obs axis size: " + str(observation.shape[0]))
+            if (((marioPosY+i) < 0 or (marioPosY+i) >= observation.shape[0]) or 
+                ((marioPosX+j) < 0 or (marioPosX+j) >= observation.shape[1])):
+                # box is bigger than what is observable
+                currBoxPos = "0"
+            else:
+                currBoxPos = observation[marioPosY+i, marioPosX+j]
 
 #                currBoxPos = currBoxPos.item(0)
             box += str(currBoxPos)
 #    print(box)
+    #print("box: " + box)
     return box
 
 #TODO: Added docustring but this function is not complete yet, will do after we clear level 1.
