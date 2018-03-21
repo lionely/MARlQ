@@ -31,7 +31,7 @@ if __name__ == "__main__":
     env = gym.make('SuperMarioBros-1-1-Tiles-v0')  # remember need to make the environment each time
     #Q = pu.loadQ('ql_box_245_2.pickle')
     #test_algorithm(env)
-    for i in range(2):
+    for i in range(1):
         print(str(i*5) + ' episodes have been run.')
-        Q = ql_box(env, 5)
+        Q = ql_box(env, 1)
     
