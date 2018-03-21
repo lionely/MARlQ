@@ -18,7 +18,12 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
     # decaying epsilon, i.e we will divide num of episodes passed
     epsilon = 1.0
     last_episode = 0 #This is so we can run episodes in batches because running many at once takes a lot of time!
-   
+    funcName = "ql_box_size" + str(boxSize)
+    pu.getLastDist(funcName)
+    #last_dist = pu.getLastDist(funcName)
+    
+    
+    
     # call setdefault for a new state.
     if pu.hasPickleWith("ql_box"):
         Q,last_episode = pu.loadLatestWith("ql_box")
@@ -106,7 +111,7 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
     #TODO: ql_box's len(Q) != maximum distance (don't know what it represents) figure out a way to have consistancy between file names.
     ep_dist,ep_reward = info['distance'],info['total_reward'] #last recorded distance , last recorded reward from episodes
     pu.saveQ(Q, num_episodes + last_episode, functionName='ql_box',boxSize=boxSize)
-    funcName = 'ql_box_size' + str(boxSize)
+    #funcName = 'ql_box_size' + str(boxSize)
     pu.collectData(num_episodes + last_episode,ep_reward,ep_dist,functionName=funcName)
     env.close()
     return Q  # return optimal Q

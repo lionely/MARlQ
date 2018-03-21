@@ -12,6 +12,13 @@ import sys
 import os
 import pandas as pd
 
+def getLastDist(functionName):
+    filename = 'reward_stats/'+functionName+'_reward_stats.csv'
+    df = pd.read_csv(filename)
+    lastDist = df.iloc[-1]['dist']
+    print("Last distance is: " + str(lastDist))
+    return lastDist    
+
 #TODO Is there a better way to search for extensions with pickle?
 def hasPickleWith(functionName):
     database = filter(os.path.isfile, glob.glob('Q-tables/*.pickle'))
