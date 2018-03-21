@@ -29,10 +29,10 @@ def saveQ(Q, num_episodes, functionName,boxSize=""):
     # If do 20 more episodes, num_episodes==30.
     if functionName == 'q_learning':
         with open('Q-tables/'+functionName + '_' +str(num_episodes)+'.pickle', 'wb') as handle:
-            pickle.dump(Q, handle, protocol=pickle.HIGHEST_PROTOCOL)
+            pickle.dump(Q, handle, protocol=2)
     else:
         with open('Q-tables/'+functionName + '_'+str(num_episodes)+'_'+str(boxSize)+'.pickle', 'wb') as handle:
-            pickle.dump(Q, handle, protocol=pickle.HIGHEST_PROTOCOL)
+            pickle.dump(Q, handle, protocol=2)
     print("Saved Q table succesfully for "+str(num_episodes)+" episodes!")
     return
 def loadQ(filename):
