@@ -28,12 +28,12 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
     
     
     # call setdefault for a new state.
-    if pu.hasPickleWith("ql_box"):
-        Q,last_episode = pu.loadLatestWith("ql_box")
-        print("Has a previous pickle.")
+    if pu.hasPickleWith("ql_box", boxSize):
+        Q,last_episode = pu.loadLatestWith("ql_box", boxSize)
+        #print("Has a previous pickle.")
 
     else:
-        print("No previous pickle exists.")
+        #print("No previous pickle exists.")
         box = getDefaultBox(boxSize)
         # not sure if "0000000000003000000000000" is a correct initial box (state) that is comparable to 0
         Q = {box: {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0}}
