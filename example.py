@@ -38,9 +38,9 @@ if __name__ == "__main__":
 
 
     #Manually start
-    for i in range(1):
-         print(str(i) + ' episodes have been run.')
-         Q = ql_box(env, 1, boxSize=3)
+    for i in range(2):
+         print(str(i*5) + ' episodes have been run.')
+         Q = ql_box(env, 5, boxSize=3)
     
 
     """
