@@ -3,7 +3,7 @@
 """
 Created on Fri Mar 16 17:32:26 2018
 
-@author: NewType
+@author: Jonathan Scott, Jinyoung Lim, So Jin Oh
 """
 
 import pickle
@@ -19,19 +19,33 @@ def getLastDist(functionName):
     df = pd.read_csv(filename)
     lastDist = df.iloc[-1]['dist']
     print("Last distance is: " + str(lastDist))
-    return lastDist    
+    return lastDist
+
+def getEpsilon(functionName):
+    filename = 'reward_stats/'+functionName+'_reward_stats.csv'
+    #if there are no previous episodes return 1 since we are just starting. 
+    if not os.path.isfile(filename): 
+        return 1
+    df = pd.read_csv(filename)
+    lastEpsilon = df.iloc[-1]['epsilon']
+    print("Last epsilon is: " + str(lastEpsilon))
+    return lastEpsilon    
 
 #TODO Is there a better way to search for extensions with pickle?
-def hasPickleWith(functionName, boxSize=""):
+def hasPickleWith(functionName, boxSize=''):
     database = filter(os.path.isfile, glob.glob('Q-tables/*.pickle'))
-    if database:
-        for file in database:
-            if ("box" in functionName):
-                if file.startswith(functionName) and file.endswith("_"+str(boxSize)):
-                    return True
+    q_table_offset = 8 #because Q-tables/ in file name
+    pickle_offset = -7#because ends with .pickle
+    for file in database: #If database is empty the loop won't start anyways
+            if ("ql_box" in functionName):
+                #JJ you can try the startswith again. Sorry I was just trying stuff to get it run locally
+                # but when you do it use those offsets plzzz =D
+               if functionName == file[q_table_offset+1:q_table_offset+7] and file[pickle_offset-1:pickle_offset] == str(boxSize):
+                   return True
             else:
                 if (functionName in file):
                     return True
+    
     return False
 
 #File name based on furthest distance, nb_episodes (q_furthestDistance_numEpisode.pickle)
@@ -40,7 +54,7 @@ def saveQ(Q, num_episodes, functionName,boxSize=""):
     # TODO: make num_episodes consider the previous number of episodes as well.
     # For example, if initially done 10 episodes, num_episodes==10.
     # If do 20 more episodes, num_episodes==30.
-    if functionName.startsWith('q_learning'):
+    if functionName == 'q_learning':
         with open('Q-tables/'+functionName + '_' +str(num_episodes)+'.pickle', 'wb') as handle:
             pickle.dump(Q, handle, protocol=2)
     else:
@@ -54,7 +68,7 @@ def loadQ(filename):
     return unserialized_data
 #TODO if there is a better please change it :D
 #https://stackoverflow.com/questions/9492481/check-that-a-type-of-file-exists-in-python
-#returns max ep num as well so we can pick up where w eleft off.
+#returns max ep num as well so we can pick up where we left off.
 def loadLatestWith(functionName):
     episode_stamps = []
     f_name = ''
@@ -75,7 +89,7 @@ def loadLatestWith(functionName):
             e_stamp = f_name[f_name_offset+2:]
             end_ = e_stamp.index('_')
             episode_stamps.append(int (e_stamp[:end_]) )
-    #print("The stamps are: ",episode_stamps)
+   
     max_e_stamp = str(max(episode_stamps))
 
     #Why are we looping through twice??
@@ -109,12 +123,4 @@ def collectData(episode_num,reward,dist,epsilon,functionName):
 
     print("Saved Episode stats succesfully for "+str(episode_num)+" episodes!")
     return
-#log = {'episode_num': [100] ,'reward': [1000], 'dist': [1000]}
-#filename = 'reward_stats/'+'ql_box'+'_reward_stats.csv'
-#stats_df = pd.DataFrame(data=log)
-#if not os.path.isfile(filename):
-#       stats_df.to_csv(filename, sep=',', encoding='utf-8',index=False)
-#
-#stats = pd.read_csv(filename)
-#stats = stats.append(stats_df,ignore_index=True)
-#stats.to_csv(filename, sep=',', encoding='utf-8',index=False)
+
