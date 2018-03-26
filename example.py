@@ -45,6 +45,5 @@ if __name__ == "__main__":
         print(str(i*numEpisodes) + ' episodes have been run.')
         Q = ql_box(env, numEpisodes, boxSize=boxSizeEntered)
 
-
     
     

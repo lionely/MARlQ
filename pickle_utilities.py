@@ -25,13 +25,18 @@ def getLastDist(functionName):
 def hasPickleWith(functionName, boxSize=""):
     database = filter(os.path.isfile, glob.glob('Q-tables/*.pickle'))
     if database:
-        for file in database:
+        for file in database:      
+            f_name = str(file).replace("Q-tables/","",1)
+            f_name = str(f_name).replace(".pickle", "", 1)
             if ("box" in functionName):
-                if file.startswith(functionName) and file.endswith("_"+str(boxSize)):
+                if f_name.startswith(functionName) and f_name.endswith("_"+str(boxSize)):
+                    print("A previous pickle exists.")
                     return True
             else:
-                if (functionName in file):
+                if (functionName in f_name):
+                    print("A previous pickle exists.")
                     return True
+    print("No previous pickle exists.")
     return False
 
 #File name based on furthest distance, nb_episodes (q_furthestDistance_numEpisode.pickle)
@@ -55,22 +60,27 @@ def loadQ(filename):
 #TODO if there is a better please change it :D
 #https://stackoverflow.com/questions/9492481/check-that-a-type-of-file-exists-in-python
 #returns max ep num as well so we can pick up where w eleft off.
-def loadLatestWith(functionName):
+def loadLatestWith(functionName, boxSize=""):
     episode_stamps = []
     f_name = ''
     # for file in _glob.glob("*.pickle"):   #PYTHON2
     for file in glob.glob("Q-tables/*.pickle"):      #PYTHON3    https://stackoverflow.com/questions/44366614/nameerror-name-glob-is-not-defined
-        if functionName in file and functionName=='q_learning':
-            f_name = str(file).replace("Q-tables/","",1)
-            #Most recent is defined as the one that makes it the furtherest distance.
+        f_name = str(file).replace("Q-tables/","",1)
+        f_name = str(f_name).replace(".pickle", "", 1)
+        if functionName in f_name and functionName=='q_learning':
+            #f_name = str(file).replace("Q-tables/","",1)
+            #Most recent is defined as the one that makes it the most episodes
             f_name_offset = len(functionName)-1 # to get the index of where it starts
             e_stamp = f_name[f_name_offset+2:]
             end_ = e_stamp.index('_')
             episode_stamps.append(int (e_stamp[:end_]) )
-        elif functionName in file:
-            f_name = str(file).replace("Q-tables/","",1)
-            box_num = f_name[-1]
-            #Most recent is defined as the one that makes it the furtherest distance.
+        elif functionName in file and f_name.endswith(str(boxSize)):
+            #f_name = str(file).replace("Q-tables/","",1)
+            #f_name = str(f_name).replace(".pickle", "", 1)
+            
+            #box_num = f_name[-1]
+            
+            #Most recent is defined as the one that makes it the most episodes
             f_name_offset = len(functionName)-1 # to get the index of where it starts
             e_stamp = f_name[f_name_offset+2:]
             end_ = e_stamp.index('_')
@@ -81,17 +91,18 @@ def loadLatestWith(functionName):
     #Why are we looping through twice??
     #I looped to find the latest pickle then after we found That
     # we load. There might be a way to load based on the most recent episode. We can look into it!
+    
     for file in glob.glob("Q-tables/*.pickle"):
-        if functionName in file and functionName=='q_learning':
-            f_name = str(file)
+        f_name = str(file).replace("Q-tables/","",1)
+        f_name = str(f_name).replace(".pickle", "", 1)
+        if functionName in f_name and functionName=='q_learning':
             if max_e_stamp in f_name:
                 break
-        elif functionName in file and box_num in file:
-            f_name = str(file)
-            if max_e_stamp in f_name:
+        elif functionName in f_name:            
+            if max_e_stamp in f_name[:-2] and f_name.endswith(str(boxSize)):
                 break
     print("Loaded: " + f_name)
-    return  (loadQ(f_name) , int(max_e_stamp) )
+    return  (loadQ("Q-tables/"+f_name+".pickle") , int(max_e_stamp) )
 
 """Saves a csv with Pandas"""
 def collectData(episode_num,reward,dist,functionName):
