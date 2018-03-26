@@ -40,11 +40,11 @@ def saveQ(Q, num_episodes, functionName,boxSize=""):
     # TODO: make num_episodes consider the previous number of episodes as well.
     # For example, if initially done 10 episodes, num_episodes==10.
     # If do 20 more episodes, num_episodes==30.
-    if functionName.startsWith('q_learning'):
+    if functionName == 'q_learning':
         with open('Q-tables/'+functionName + '_' +str(num_episodes)+'.pickle', 'wb') as handle:
             pickle.dump(Q, handle, protocol=2)
     else:
-        with open('Q-tables/'+functionName + '_'+str(num_episodes)+'_'+str(boxSize)+'.pickle', 'wb') as handle:
+        with open('Q-tables/'+functionName + ''+str(num_episodes)+''+str(boxSize)+'.pickle', 'wb') as handle:
             pickle.dump(Q, handle, protocol=2)
     print("Saved Q table succesfully for "+str(num_episodes)+" episodes!")
     return

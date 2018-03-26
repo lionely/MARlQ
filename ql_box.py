@@ -21,7 +21,7 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
     funcName = "ql_box_size" + str(boxSize)
     lastDist = pu.getLastDist(funcName)
     lastDistProp = lastDist/3266 #what proportion of the entire distance mario got last 3266 is the entire distance for stage 1
-    epsilon = 1.0 - lastDistProp
+    epsilon = 0.7
     
     #last_dist = pu.getLastDist(funcName)
     
@@ -104,7 +104,7 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
             # make the next_state into current state as we go for next iteration
             state = next_state
         # decay epsilon according to the distance
-        epsilon = 1.0 - (info['distance']/3266)
+        #epsilon = epsilon - 1/5000
 
     #TODO: ql_box's len(Q) != maximum distance (don't know what it represents) figure out a way to have consistancy between file names.
     ep_dist,ep_reward = info['distance'],info['total_reward'] #last recorded distance , last recorded reward from episodes
