@@ -3,7 +3,7 @@
 """
 Created on Fri Mar 16 17:44:59 2018
 
-@author: NewType
+@author: Jonathan Scott, Jinyoung Lim, So Jin Oh
 """
 
 import pickle_utilities as pu
@@ -13,29 +13,37 @@ import random
 
 """Q-learning with box as a state. The box size will be 2 blocks away from Mario as a default.
 """
+#TODO reassign episilon based on previous eps, need to record episolon after last episode.
+#TODO decrease eps based on (20000)- # of eps ran so far
 #worked on this instead of ql_box because accounting for a boxed (limited) environment means that the policy would not be a reinforced-learning?
 def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
-    # decaying epsilon, i.e we will divide num of episodes passed
-    #epsilon = 1.0
+   
+   
+    max_episode = 5000.0 #assuming we need at most 5,000 episodes
     last_episode = 0 #This is so we can run episodes in batches because running many at once takes a lot of time!
-    funcName = "ql_box_size" + str(boxSize)
-    lastDist = pu.getLastDist(funcName)
-    lastDistProp = lastDist/3266 #what proportion of the entire distance mario got last 3266 is the entire distance for stage 1
-    epsilon = 1.0 - lastDistProp
     
-    #last_dist = pu.getLastDist(funcName)
+    funcName = "ql_box_size" + str(boxSize)
+    epsilon = pu.getEpsilon(funcName)
+#    lastDist = pu.getLastDist(funcName)
+#    lastDistProp = lastDist/3266 #what proportion of the entire distance mario got last 3266 is the entire distance for stage 1
+#    epsilon = 1.0 - lastDistProp
+#    last_dist = pu.getLastDist(funcName)
     
     
     
     # call setdefault for a new state.
-    if pu.hasPickleWith("ql_box"):
+    if pu.hasPickleWith("ql_box",'2'):
         Q,last_episode = pu.loadLatestWith("ql_box")
 
     else:
-        box = getDefaultBox(boxSize)
         # not sure if "0000000000003000000000000" is a correct initial box (state) that is comparable to 0
-        Q = {box: {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0}}
-        
+        Q = {"0000000000003000000000000": {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0}}
+        # the state "0000000000003000000000000" represents the box that looks as below
+        # 00000
+        # 00000
+        # 00300
+        # 11111
+        # 11111
     action = [0, 0, 0, 0, 0, 0]  # Do nothing
     action_dict = {'up':    [1, 0, 0, 0, 0, 0],
                    'L':     [0, 1, 0, 0, 0, 0],
@@ -46,6 +54,7 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
 
 
     for episode in range(num_episodes):
+        good_distance = False # A distance I deemed worthy.
         print("Starting episode: ",episode)
         observation = env.reset()
         observation, reward, done, info = env.step(action)
@@ -84,7 +93,8 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
                 action = action_dict[str(max_q_action)]
             # apply selected action, collect values for next_state and reward
 
-
+            if info['distance']%200==0:
+                good_distance = True
             observation, reward, done, info = env.step(action)
            
             #print("Qbox reward is: "+str(reward))
@@ -99,28 +109,30 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
             Q[state][str(max_q_action)] = Q[state][str(max_q_action)] + (alpha * Q_delta)
 
             # break if done, i.e. if end of this episode
-            if done:
+            if done or info['distance']>=3266:
                 break
             # make the next_state into current state as we go for next iteration
-            state = next_state
-        # decay epsilon according to the distance
-        epsilon = 1.0 - (info['distance']/3266)
-
-    #TODO: ql_box's len(Q) != maximum distance (don't know what it represents) figure out a way to have consistancy between file names.
+            state = next_state #last_episode+episode
+            #TODO check if distance is a float.
+         # gradualy decay the epsilon and everytime number of iterations is divisible by 50, decreas episilon by 1.5%
+            
+        if epsilon > 0.30:
+            if (last_episode%5 == 0) and (good_distance):
+                epsilon-= 0.0100#since this is rare,take off a huge randomness
+            else:
+                epsilon -= 1.0/max_episode
+#        epsilon = 1.0
+#        for i in range(1,386):
+#            #print(epsilon,i)
+#            epsilon-= (1)/(max_episode)
+#        epsilon
+    #print("Epsilon is "+str(epsilon))
+    
     ep_dist,ep_reward = info['distance'],info['total_reward'] #last recorded distance , last recorded reward from episodes
     pu.saveQ(Q, num_episodes + last_episode, functionName='ql_box',boxSize=boxSize)
-    #funcName = 'ql_box_size' + str(boxSize)
-    pu.collectData(num_episodes + last_episode,ep_reward,ep_dist,functionName=funcName)
+    pu.collectData(num_episodes + last_episode,ep_reward,ep_dist,epsilon,functionName=funcName)
     env.close()
     return Q  # return optimal Q
-
-"""Returns a defalut box according to the size of the box."""
-def getDefaultBox(boxSize):
-    strLen = boxSize * boxSize
-    boxToStr = "0" * strLen
-    list(boxToStr)[int(strLen/2)] = "3"
-    #print("boxToStr: " + boxToStr)
-    return str(boxToStr)
 
 """Returns information of a box surrounding the Mario in str type. Used for ql_box."""
 def getBox(observation, boxSize):
@@ -128,23 +140,7 @@ def getBox(observation, boxSize):
 
     # handle edge case where mario's positions are not given
     if marioPosY.size == 0 or marioPosX.size == 0:
-        """ boxSize == 2
-        0 0 0 0 0
-        0 0 0 0 0
-        0 0 3 0 0 --> 5x5 with Mario (3) at boxToStr[12] or boxToStr[int(5*5/2)] of len(boxToStr) == 25
-        0 0 0 0 0
-        0 0 0 0 0
-        """
-        """ boxSize == 3
-        0 0 0 0 0 0 0
-        0 0 0 0 0 0 0
-        0 0 0 0 0 0 0
-        0 0 0 3 0 0 0
-        0 0 0 0 0 0 0 --> 7x7 with Mario (3) at boxToStr[24] or boxToStr[int(7*7/2)] of len(boxToStr) == 7*7
-        0 0 0 0 0 0 0
-        0 0 0 0 0 0 0
-        """
-        return getDefaultBox(boxSize)
+        return "0000000000003000000000000"
 
 
     marioPosX = marioPosX.item(0)
@@ -153,20 +149,11 @@ def getBox(observation, boxSize):
     box = ""
     for i in range(-boxSize,boxSize+1):
         for j in range(-boxSize, boxSize+1):
-            #print("marioPosX: " + str(marioPosX) + ", marioPosY: " + str(marioPosY))
-            #print("marioPosX+j: " + str(marioPosX+j) + ", marioPosY+i: " + str(marioPosY+i))
-            #print("obs axis size: " + str(observation.shape[0]))
-            if (((marioPosY+i) < 0 or (marioPosY+i) >= observation.shape[0]) or 
-                ((marioPosX+j) < 0 or (marioPosX+j) >= observation.shape[1])):
-                # box is bigger than what is observable
-                currBoxPos = "0"
-            else:
-                currBoxPos = observation[marioPosY+i, marioPosX+j]
+            currBoxPos = observation[marioPosY+i, marioPosX+j]
 
 #                currBoxPos = currBoxPos.item(0)
             box += str(currBoxPos)
 #    print(box)
-    #print("box: " + box)
     return box
 
 #TODO: Added docustring but this function is not complete yet, will do after we clear level 1.
@@ -187,7 +174,8 @@ def test_algorithm(env,boxSize=2,Q=None):
 
 
     state = getBox(observation, boxSize)
-   
+    #print(state,Q[state])
+    #0000000000003001111111111
     action_dict = {'up':    [1, 0, 0 ,0, 0, 0],
                    'L':     [0, 1, 0, 0, 0, 0],
                    'down':  [0, 0, 1, 0, 0, 0],

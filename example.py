@@ -7,12 +7,9 @@ Created on Fri Feb 16 11:26:15 2018
 """
 
 import gym
-#import numpy 
 import pickle_utilities as pu
 from ql_box import *
 import sys
-#import itertools
-#import random
 #import wrappers 
 
 #TODO Figure out how to stop mario from getting stuck.
@@ -30,15 +27,21 @@ def playAsHuman(env, playTime=1000):
    
 #TODO collect total reward after every 5 episodes, max distance, episodes ran so far
 
-#params: [1]num of batches [2]num of episodes [3]box size
+#note at 670, decrease max ep to 5000 after reading paper.
+#After 730, I changed the reward function to penality of 0.03 from 0.01 
+#After 995, changed epsilon decrease conditions
+"""params: [1]num of batches [2]num of episodes [3]box size"""
 if __name__ == "__main__":
     env = gym.make('SuperMarioBros-1-1-Tiles-v0')  # remember need to make the environment each time
-    #Q = pu.loadQ('ql_box_245_2.pickle')
-    #test_algorithm(env)
-    numBatches = int(sys.argv[1])
-    numEpisodes = int(sys.argv[2])
-    boxSizeEntered = int(sys.argv[3])
-    
+    test_algorithm(env)
+    if len(sys.argv) == 4:
+        numBatches = int(sys.argv[1])
+        numEpisodes = int(sys.argv[2])
+        boxSizeEntered = int(sys.argv[3]) 
+    else:
+        numBatches = 2
+        numEpisodes = 5
+        boxSizeEntered = 2
     print('number of batches: ' + str(numBatches) + ', number of episodes: ' +
           str(numEpisodes) + ', box size: ' + str(boxSizeEntered))
     for i in range(numBatches):
