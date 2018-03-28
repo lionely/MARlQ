@@ -1,0 +1,37 @@
+import csv
+import pickle
+
+def main(path_pickle,path_csv):
+
+    x = []
+    with open(path_pickle,'rb') as f:
+        x = pickle.load(f)
+
+    with open(path_csv,'w') as f:
+        writer = csv.writer(f)
+        for key, val in x.items():
+            qvals = []
+            for movement, qval in val.items():
+                qvals.append(qval)
+            writer.writerow([key]+qvals)
+
+
+
+if __name__ == "__main__":
+    main('Q-tables/ql_box_502_2.pickle',
+         'csv_files/ql_box_502_2.csv')
+
+    main('Q-tables/ql_box_400_2.pickle',
+         'csv_files/ql_box_400_2.csv')
+
+    main('Q-tables/ql_box_402_2.pickle',
+         'csv_files/ql_box_402_2.csv')
+
+    main('Q-tables/ql_box_400_2.pickle',
+         'csv_files/ql_box_400_2.csv')
+
+    main('Q-tables/ql_box_397_2.pickle',
+         'csv_files/ql_box_397_2.csv')
+
+    main('Q-tables/ql_box_380_2.pickle',
+         'csv_files/ql_box_380_2.csv')
