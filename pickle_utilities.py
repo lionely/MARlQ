@@ -53,6 +53,7 @@ def saveQ(Q, num_episodes, functionName,boxSize=""):
             pickle.dump(Q, handle, protocol=2)
     print("Saved Q table succesfully for "+str(num_episodes)+" episodes!")
     return
+
 def loadQ(filename):
     with open(filename, 'rb') as handle:
         unserialized_data = pickle.load(handle)
@@ -108,7 +109,7 @@ def loadLatestWith(functionName, boxSize=""):
 def collectData(episode_num,reward,dist,functionName):
     log = {'episode_num': [episode_num] ,'reward': [reward], 'dist': [dist]}
     stats_df = pd.DataFrame(data=log)
-    filename = 'reward_stats/'+functionName+'_reward_stats.csv'
+    filename = 'reward_stats/'+functionName+'_reward_stats'+'.csv'
     if not os.path.isfile(filename):
         stats_df.to_csv(filename, sep=',', encoding='utf-8',index=False)
     stats = pd.read_csv(filename)

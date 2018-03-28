@@ -15,16 +15,24 @@ import random
 """
 #worked on this instead of ql_box because accounting for a boxed (limited) environment means that the policy would not be a reinforced-learning?
 def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
+    """(http://178.79.149.207/posts/cartpole-qlearning.html)
+    alpha       learning rate
+    epsilon     exploration rate
+    gamma       discount factor
+    """
+    
     # decaying epsilon, i.e we will divide num of episodes passed
     #epsilon = 1.0
     last_episode = 0 #This is so we can run episodes in batches because running many at once takes a lot of time!
     funcName = "ql_box_size" + str(boxSize)
-    lastDist = pu.getLastDist(funcName)
-    lastDistProp = lastDist/3266 #what proportion of the entire distance mario got last 3266 is the entire distance for stage 1
-    epsilon = 1.0 - lastDistProp
+    #lastDist = pu.getLastDist(funcName)
+    #lastDistProp = lastDist/3266 #what proportion of the entire distance mario got last 3266 is the entire distance for stage 1
+    #epsilon = 1.0 - lastDistProp
+    
     
     #last_dist = pu.getLastDist(funcName)
-    
+    #
+    #epsilon = 0.5*(epsilon_decay**last_episode)
     
     
     # call setdefault for a new state.
@@ -37,7 +45,12 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
         box = getDefaultBox(boxSize)
         # not sure if "0000000000003000000000000" is a correct initial box (state) that is comparable to 0
         Q = {box: {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0}}
-        
+    
+    
+    #epsilon = 0.8 - 1/5000*(last_episode) # QAndRewards_box3_0.8_minus0002perEp
+    epsilon_decay = 0.99
+
+    
     action = [0, 0, 0, 0, 0, 0]  # Do nothing
     action_dict = {'up':    [1, 0, 0, 0, 0, 0],
                    'L':     [0, 1, 0, 0, 0, 0],
@@ -53,7 +66,11 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
         observation, reward, done, info = env.step(action)
 
         marioPosY, marioPosX = np.where(observation == 3)   #mario position
-
+        epsilon = 0.5*(epsilon_decay**(last_episode+episode))
+        if epsilon < 0.1:
+            epsilon = 0.1
+        print("epsilon: " +str(epsilon))
+        
         # in the beginning of the game, when mario's position is not set (that is we cannot get
         # mario's x and y positions using observation), mario moves right
         # TODO: if there is a more elegant way to deal with the beginning of the game (edge case)... go for it!
@@ -105,14 +122,20 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
                 break
             # make the next_state into current state as we go for next iteration
             state = next_state
+
+        
+        ep_dist,ep_reward = info['distance'],info['total_reward'] #last recorded distance , last recorded reward from episodes
+        pu.saveQ(Q, episode + last_episode + 1, functionName='ql_box',boxSize=boxSize)
+        pu.collectData(episode + last_episode +1,ep_reward,ep_dist,functionName=funcName)
+        
         # decay epsilon according to the distance
-        epsilon = 1.0 - (info['distance']/3266)
+        
+        #epsilon -= 1/5000
 
     #TODO: ql_box's len(Q) != maximum distance (don't know what it represents) figure out a way to have consistancy between file names.
-    ep_dist,ep_reward = info['distance'],info['total_reward'] #last recorded distance , last recorded reward from episodes
-    pu.saveQ(Q, num_episodes + last_episode, functionName='ql_box',boxSize=boxSize)
-    #funcName = 'ql_box_size' + str(boxSize)
-    pu.collectData(num_episodes + last_episode,ep_reward,ep_dist,functionName=funcName)
+    #ep_dist,ep_reward = info['distance'],info['total_reward'] #last recorded distance , last recorded reward from episodes
+    #pu.saveQ(Q, num_episodes + last_episode, functionName='ql_box',boxSize=boxSize)
+    #pu.collectData(num_episodes + last_episode,ep_reward,ep_dist,functionName=funcName)
     env.close()
     return Q  # return optimal Q
 
@@ -176,7 +199,7 @@ def getBox(observation, boxSize):
 at each state is actually being taken. """
 def test_algorithm(env,boxSize=2,Q=None):
     if not Q:
-        Q = pu.loadLatestWith('ql_box')[0]
+        Q = pu.loadLatestWith('ql_box', boxSize)[0]
     observation = env.reset()
     total_reward = 0
     action = [0]*6
