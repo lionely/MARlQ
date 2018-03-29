@@ -1,4 +1,4 @@
-# QAndRewards_box3_epsilon0.5_epsilonDecay0.99_standingPenaltyTrue
+# QAndRewards_box3_epsilon0.5_epsilonDecay0.99_standingPenaltyFalse
 Q-learning Function: ql_box, boxSize==3
 Epsilon Policy: 0.5*(0.99**numTotalEp), floor==0.1
-Standing Penalty: Yes, 0.03
+Standing Penalty: False
