@@ -21,8 +21,8 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
     funcName = "ql_box_size" + str(boxSize)
     lastDist = pu.getLastDist(funcName)
     lastDistProp = lastDist/3266 #what proportion of the entire distance mario got last 3266 is the entire distance for stage 1
-    epsilon = 0.7
-    
+
+
     #last_dist = pu.getLastDist(funcName)
     
     
@@ -66,10 +66,19 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
         state = getBox(observation, boxSize)
 
         Q.setdefault(state, {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0})
-
+        randomness_added_by_time = 0
         for t in itertools.count():
             # generate a random num between 0 and 1 e.g. 0.35, 0.73 etc..
             # if the generated num is smaller than epsilon, we follow exploration policy
+            if info['distance'] < 520:
+                epsilon = info['distance'] / 8000
+            elif (520 <= info['distance']) and (info['distance'] < 575):
+                epsilon = info['distance']/1000
+            else:
+                epsilon = info['distance']/700
+            randomness_added_by_time += 0.0000001
+            epsilon += randomness_added_by_time
+            print(epsilon)
             if np.random.random() <= epsilon:
                 # select a random action from set of all actions
                 # max_q_action = random.choice(Q[state].keys())      # PYTHON2
@@ -174,9 +183,9 @@ def getBox(observation, boxSize):
 #TODO: Added docustring but this function is not complete yet, will do after we clear level 1.
 """This function takes an environment and Q table and checks if the optimal actions
 at each state is actually being taken. """
-def test_algorithm(env,boxSize=2,Q=None):
+def test_algorithm(env,boxSize=3,Q=None):
     if not Q:
-        Q = pu.loadLatestWith('ql_box')[0]
+        Q = pu.loadLatestWith('ql_box', boxSize=3)[0]
     observation = env.reset()
     total_reward = 0
     action = [0]*6

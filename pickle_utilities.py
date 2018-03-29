@@ -49,7 +49,7 @@ def saveQ(Q, num_episodes, functionName,boxSize=""):
         with open('Q-tables/'+functionName + '_' +str(num_episodes)+'.pickle', 'wb') as handle:
             pickle.dump(Q, handle, protocol=2)
     else:
-        with open('Q-tables/'+functionName + ''+str(num_episodes)+''+str(boxSize)+'.pickle', 'wb') as handle:
+        with open('Q-tables/'+functionName + '_'+str(num_episodes)+'_'+str(boxSize)+'.pickle', 'wb') as handle:
             pickle.dump(Q, handle, protocol=2)
     print("Saved Q table succesfully for "+str(num_episodes)+" episodes!")
     return
@@ -91,7 +91,7 @@ def loadLatestWith(functionName, boxSize=""):
     #Why are we looping through twice??
     #I looped to find the latest pickle then after we found That
     # we load. There might be a way to load based on the most recent episode. We can look into it!
-    
+
     for file in glob.glob("Q-tables/*.pickle"):
         f_name = str(file).replace("Q-tables/","",1)
         f_name = str(f_name).replace(".pickle", "", 1)
