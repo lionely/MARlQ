@@ -36,15 +36,15 @@ if __name__ == "__main__":
     #Q = pu.loadQ('ql_box_245_2.pickle')
     #test_algorithm(env)
 
-    # test_algorithm(env, boxSize=3)
+    test_algorithm(env, boxSize=3)
 
 
        
-    #Manually start
-    for i in range(1):
-        numEp = 1
-        print(str(i*numEp) + ' episodes have been run.')
-        Q = ql_box(env, numEp, boxSize=3)
+    # #Manually start
+    # for i in range(1):
+    #     numEp = 5
+    #     print(str(i*numEp) + ' episodes have been run.')
+    #     Q = ql_box(env, numEp, boxSize=3)
     
 
     """

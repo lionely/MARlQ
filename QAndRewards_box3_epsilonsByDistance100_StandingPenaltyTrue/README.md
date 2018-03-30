@@ -18,3 +18,5 @@ Epsilon Policy:
             epsilon = epsilons[epsilon_index]
 
 Standing Penalty: True, 0.5
+
+Ran the test_algorithm after 300 episodes. Goes to distance==0 and jumps. Might be due to the standing penalty being too large?
