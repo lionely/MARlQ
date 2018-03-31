@@ -200,6 +200,24 @@ def getBox(observation, boxSize):
     return box
 
 #TODO: Added docustring but this function is not complete yet, will do after we clear level 1.
+"""
+[2018-03-30 22:24:00,942] Making new env: SuperMarioBros-1-1-Tiles-v0
+Loaded: ql_box_150_3
+Traceback (most recent call last):
+  File "/Users/JJ/Desktop/PyCharm CE.app/Contents/helpers/pydev/pydev_run_in_console.py", line 78, in <module>
+    globals = run_file(file, None, None)
+  File "/Users/JJ/Desktop/PyCharm CE.app/Contents/helpers/pydev/pydev_run_in_console.py", line 35, in run_file
+    pydev_imports.execfile(file, globals, locals)  # execute the script
+  File "/Users/JJ/Desktop/PyCharm CE.app/Contents/helpers/pydev/_pydev_imps/_pydev_execfile.py", line 18, in execfile
+    exec(compile(contents+"\n", file, 'exec'), glob, loc)
+  File "/Users/JJ/RoboticsProject/MARlQ/example.py", line 39, in <module>
+    test_algorithm(env, boxSize=3)
+  File "/Users/JJ/RoboticsProject/MARlQ/ql_box.py", line 229, in test_algorithm
+    max_q_action = max(Q[state], key=lambda key: Q[state][key])
+KeyError: '0000000000000000100010003000000000000000021111111'
+
+"""
+
 """This function takes an environment and Q table and checks if the optimal actions
 at each state is actually being taken. """
 def test_algorithm(env,boxSize=2,Q=None):
