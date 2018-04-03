@@ -94,6 +94,9 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
             
             # generate a random num between 0 and 1 e.g. 0.35, 0.73 etc..
             # if the generated num is smaller than epsilon, we follow exploration policy
+
+            # epsilon = 0 # test
+
             if np.random.random() <= epsilon:
                 # select a random action from set of all actions
                 # max_q_action = random.choice(Q[state].keys())      # PYTHON2
