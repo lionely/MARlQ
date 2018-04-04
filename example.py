@@ -41,8 +41,13 @@ if __name__ == "__main__":
 
        
     #Manually start
+<<<<<<< HEAD
     for i in range(200):
         numEp = 5
+=======
+    for i in range(1):
+        numEp = 50
+>>>>>>> 1d72551e15d9cb13d87b387ec00af6b907138522
         print(str(i*numEp) + ' episodes have been run.')
         Q = ql_box(env, numEp, boxSize=3)
 
