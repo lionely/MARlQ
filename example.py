@@ -42,7 +42,7 @@ if __name__ == "__main__":
        
     #Manually start
     for i in range(1):
-        numEp = 10
+        numEp = 50
         print(str(i*numEp) + ' episodes have been run.')
         Q = ql_box(env, numEp, boxSize=3)
 
