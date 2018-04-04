@@ -116,7 +116,7 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
             #TODO check if distance is a float.
          # gradualy decay the epsilon and everytime number of iterations is divisible by 50, decreas episilon by 1.5%
             
-        if epsilon > 0.30:
+        if epsilon > 0.26:
             if (last_episode%5 == 0) and (good_distance):
                 epsilon-= 0.0100#since this is rare,take off a huge randomness
             else:

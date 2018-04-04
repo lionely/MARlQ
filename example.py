@@ -30,16 +30,21 @@ def playAsHuman(env, playTime=1000):
 #note at 670, decrease max ep to 5000 after reading paper.
 #After 730, I changed the reward function to penality of 0.03 from 0.01 
 #After 995, changed epsilon decrease conditions
+#decreased from 0.35 to 0.30. 
+#decreasing from 0.30 to 0.29. .29~.28 .28~.27,.27~.26
+#at 1885 eps changed stand penalty to 0.4
+#at 2235, tried to increase going right reward by 1.5
+#at 2260 trying a huge negative reward for going left. -6*reward
 """params: [1]num of batches [2]num of episodes [3]box size"""
 if __name__ == "__main__":
     env = gym.make('SuperMarioBros-1-1-Tiles-v0')  # remember need to make the environment each time
-    test_algorithm(env)
+    #test_algorithm(env)
     if len(sys.argv) == 4:
         numBatches = int(sys.argv[1])
         numEpisodes = int(sys.argv[2])
         boxSizeEntered = int(sys.argv[3]) 
     else:
-        numBatches = 2
+        numBatches = 10
         numEpisodes = 5
         boxSizeEntered = 2
     print('number of batches: ' + str(numBatches) + ', number of episodes: ' +

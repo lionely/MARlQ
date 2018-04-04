@@ -124,3 +124,5 @@ def collectData(episode_num,reward,dist,epsilon,functionName):
     print("Saved Episode stats succesfully for "+str(episode_num)+" episodes!")
     return
 
+#def plotResults(x,y):
+    
