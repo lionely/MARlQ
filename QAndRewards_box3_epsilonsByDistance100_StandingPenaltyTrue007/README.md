@@ -17,4 +17,4 @@ Epsilon Policy:
             #print(epsilon_index)
             epsilon = epsilons[epsilon_index]
 
-Standing Penalty: True, 0.07
+Standing Penalty: True and False..., 0.07 to 0

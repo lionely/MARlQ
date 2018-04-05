@@ -27,7 +27,7 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
     
     # decaying epsilon, i.e we will divide num of episodes passed
     #epsilon = 1.0
-    last_episode = 0    # This is so we can run episodes in batches because 
+    last_episode = 0    # This is so we can run episodes in batches because
                         # running many at once takes a lot of time!
     funcName = "ql_box_size" + str(boxSize)
 
@@ -38,9 +38,9 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
         box = getDefaultBox(boxSize)
         # not sure if "0000000000003000000000000" is a correct initial box (state) that is comparable to 0
         Q = {box: {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0}}
-       
 
-    
+
+
     action = [0, 0, 0, 0, 0, 0]  # Do nothing
     action_dict = {'up':    [1, 0, 0, 0, 0, 0],
                    'L':     [0, 1, 0, 0, 0, 0],
@@ -49,29 +49,29 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
                    'JUMP':  [0, 0, 0, 0, 1, 0],
                    'B':     [0, 0, 0, 0, 0, 1]}
 
-    
+
     for episode in range(num_episodes):
         ### Epsilon Policy ###
         epsilon_floor = 0.3
         epsilons = [0.7] * (int(TOTAL_DIST/100)+1)
         lastDist = pu.getLastDist(funcName)
-        epsilon_lastDist_i = int(lastDist/100)    
+        epsilon_lastDist_i = int(lastDist/100)
         #TODO: There might be a more effective way to do this!
         for i in range(epsilon_lastDist_i):
             if (epsilon_lastDist_i - i) > 4:
                 epsilons[i] = epsilon_floor
             else:
                 epsilons[i] -= 0.1 * (epsilon_lastDist_i - i)
-        print(epsilons) #DEBUG 
-        
-        
+        print(epsilons) #DEBUG
+
+
         # Reset environment each episode
         print("Starting episode: ",episode)
         observation = env.reset()
         observation, reward, done, info = env.step(action)
         marioPosY, marioPosX = np.where(observation == 3)   #mario position
-        
-            
+
+
         # in the beginning of the game, when mario's position is not set (that is we cannot get
         # mario's x and y positions using observation), mario moves right
         # TODO: if there is a more elegant way to deal with the beginning of the game (edge case)... go for it!
@@ -79,19 +79,19 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
             action = [0, 0, 0, 1, 0, 0]
             observation, reward, done, info = env.step(action)
             marioPosY, marioPosX = np.where(observation == 3)
-        
-        
+
+
         state = getBox(observation, boxSize)
 
         Q.setdefault(state, {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0})
 
         for t in itertools.count():
             # Choose which epsilon depending on distance
-            
+
             epsilon_index = int(info['distance']/100)
             #print(epsilon_index)
             epsilon = epsilons[epsilon_index]
-            
+
             # generate a random num between 0 and 1 e.g. 0.35, 0.73 etc..
             # if the generated num is smaller than epsilon, we follow exploration policy
 
@@ -110,10 +110,10 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
                 max_q_action = max(Q[state], key=(lambda key: Q[state][key]))
                 # not fully sure about lambdas >.< https://stackoverflow.com/questions/268272/getting-key-with-maximum-value-in-dictionary
                 action = action_dict[str(max_q_action)]
-                
+
             # apply selected action, collect values for next_state and reward
             observation, reward, done, info = env.step(action)
-           
+
             #print("Qbox reward is: "+str(reward))
             next_state = getBox(observation, boxSize)
             Q.setdefault(next_state, {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0})
@@ -131,13 +131,13 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
             # make the next_state into current state as we go for next iteration
             state = next_state
 
-        
+
         ep_dist,ep_reward = info['distance'],info['total_reward'] #last recorded distance , last recorded reward from episodes
         pu.saveQ(Q, episode + last_episode + 1, functionName='ql_box',boxSize=boxSize)
         pu.collectData(episode + last_episode +1,ep_reward,ep_dist,functionName=funcName)
-        
+
         # decay epsilon according to the distance
-        
+
         #epsilon -= 1/5000
 
     #TODO: ql_box's len(Q) != maximum distance (don't know what it represents) figure out a way to have consistancy between file names.
@@ -189,7 +189,7 @@ def getBox(observation, boxSize):
             #print("marioPosX: " + str(marioPosX) + ", marioPosY: " + str(marioPosY))
             #print("marioPosX+j: " + str(marioPosX+j) + ", marioPosY+i: " + str(marioPosY+i))
             #print("obs axis size: " + str(observation.shape[0]))
-            if (((marioPosY+i) < 0 or (marioPosY+i) >= observation.shape[0]) or 
+            if (((marioPosY+i) < 0 or (marioPosY+i) >= observation.shape[0]) or
                 ((marioPosX+j) < 0 or (marioPosX+j) >= observation.shape[1])):
                 # box is bigger than what is observable
                 currBoxPos = "0"
@@ -238,7 +238,7 @@ def test_algorithm(env,boxSize=2,Q=None):
 
 
     state = getBox(observation, boxSize)
-   
+
     action_dict = {'up':    [1, 0, 0 ,0, 0, 0],
                    'L':     [0, 1, 0, 0, 0, 0],
                    'down':  [0, 0, 1, 0, 0, 0],
@@ -257,11 +257,11 @@ def test_algorithm(env,boxSize=2,Q=None):
         next_state = getBox(observation, boxSize)
         # calculate total reward
         total_reward += reward
-        
+
 #        print('reward is ',reward)
 #        print(info['total_reward'])
 #        print('total_reward var ',total_reward)
-        
+
         if done:
             print(total_reward)
             break
