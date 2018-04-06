@@ -44,8 +44,8 @@ if __name__ == "__main__":
         numEpisodes = int(sys.argv[2])
         boxSizeEntered = int(sys.argv[3])
     else:
-        numBatches = 10000
-        numEpisodes = 5
+        numBatches = 2
+        numEpisodes = 1
         boxSizeEntered = 2
     print('number of batches: ' + str(numBatches) + ', number of episodes: ' +
           str(numEpisodes) + ', box size: ' + str(boxSizeEntered))
