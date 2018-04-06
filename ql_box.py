@@ -32,7 +32,7 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
     
     
     # call setdefault for a new state.
-    if pu.hasPickleWith("ql_box",'2'):
+    if pu.hasPickleWith("ql_box",'2','Q-tables/*.pickle'):
         Q,last_episode = pu.loadLatestWith("ql_box")
 
     else:

@@ -23,30 +23,31 @@ def getLastDist(functionName):
 
 def getEpsilon(functionName):
     filename = 'reward_stats/'+functionName+'_reward_stats.csv'
-    #if there are no previous episodes return 1 since we are just starting. 
-    if not os.path.isfile(filename): 
+    #if there are no previous episodes return 1 since we are just starting.
+    if not os.path.isfile(filename):
         return 1
     df = pd.read_csv(filename)
     lastEpsilon = df.iloc[-1]['epsilon']
     print("Last epsilon is: " + str(lastEpsilon))
-    return lastEpsilon    
+    return lastEpsilon
 
 #TODO Is there a better way to search for extensions with pickle?
-def hasPickleWith(functionName, boxSize=''):
-    database = filter(os.path.isfile, glob.glob('Q-tables/*.pickle'))
+def hasPickleWith(functionName, boxSize='',path=''):
+    """This function checks to see if there exists pickle files. """
+    database = filter(os.path.isfile, glob.glob(path))
     q_table_offset = 8 #because Q-tables/ in file name
     pickle_offset = -7#because ends with .pickle
-    for file in database: #If database is empty the loop won't start anyways
-            if ("ql_box" in functionName):
-                #JJ you can try the startswith again. Sorry I was just trying stuff to get it run locally
-                # but when you do it use those offsets plzzz =D
-               if functionName == file[q_table_offset+1:q_table_offset+7] and file[pickle_offset-1:pickle_offset] == str(boxSize):
-                   return True
-            else:
-                if (functionName in file):
-                    return True
-    
-    return False
+#    for file in database: #If database is empty the loop won't start anyways
+#            if ("ql_box" in functionName):
+#                #JJ you can try the startswith again. Sorry I was just trying stuff to get it run locally
+#                # but when you do it use those offsets plzzz =D
+#               if functionName == file[q_table_offset+1:q_table_offset+7] and file[pickle_offset-1:pickle_offset] == str(boxSize):
+#                   return True
+#            else:
+#                if (functionName in file):
+#                    return True
+
+    return len(database)>0
 
 #File name based on furthest distance, nb_episodes (q_furthestDistance_numEpisode.pickle)
 #https://stackoverflow.com/questions/11218477/how-can-i-use-pickle-to-save-a-dict
@@ -89,7 +90,7 @@ def loadLatestWith(functionName):
             e_stamp = f_name[f_name_offset+2:]
             end_ = e_stamp.index('_')
             episode_stamps.append(int (e_stamp[:end_]) )
-   
+
     max_e_stamp = str(max(episode_stamps))
 
     #Why are we looping through twice??
@@ -110,7 +111,7 @@ def loadLatestWith(functionName):
 """Saves a csv with Pandas"""
 def collectData(episode_num,reward,dist,epsilon,functionName):
     log = {'episode_num': [episode_num] ,
-           'reward': [reward], 
+           'reward': [reward],
            'dist': [dist],
            'epsilon':[epsilon]}
     stats_df = pd.DataFrame(data=log)
@@ -124,5 +125,26 @@ def collectData(episode_num,reward,dist,epsilon,functionName):
     print("Saved Episode stats succesfully for "+str(episode_num)+" episodes!")
     return
 
-#def plotResults(x,y):
-    
+def saveBestActions(bestActions,functionName,boxSize=""):
+    """
+    Saves the best action for a maximum distance achieved.
+    """
+    if functionName == 'q_learning':
+        with open('bestActions/'+functionName +'.pickle', 'wb') as handle:
+            pickle.dump(bestActions, handle, protocol=2)
+    else:
+        with open('bestActions/'+functionName +'_'+str(boxSize)+'.pickle', 'wb') as handle:
+            pickle.dump(bestActions, handle, protocol=2)
+    print("Saved Best Actions succesfully.")
+    return
+
+def loadBestAction(functionName):
+    for file in glob.glob("bestActions/*.pickle"):
+        if functionName in file and functionName=='q_learning':
+            f_name = str(file)
+            
+        elif functionName in file and box_num in file:
+            f_name = str(file)
+           
+    print("Loaded Best Actions: " + f_name)
+    return loadQ(f_name) 
