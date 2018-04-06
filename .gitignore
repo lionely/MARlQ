@@ -2,3 +2,4 @@
 *.pyc
 history/
 *.pdf
+.DS_Store
