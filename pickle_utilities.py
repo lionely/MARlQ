@@ -31,30 +31,18 @@ def getEpsilon(functionName):
     print("Last epsilon is: " + str(lastEpsilon))
     return lastEpsilon
 
-#TODO Is there a better way to search for extensions with pickle?
+
 def hasPickleWith(functionName, boxSize='',path=''):
     """This function checks to see if there exists pickle files. """
     database = filter(os.path.isfile, glob.glob(path))
-    q_table_offset = 8 #because Q-tables/ in file name
-    pickle_offset = -7#because ends with .pickle
-#    for file in database: #If database is empty the loop won't start anyways
-#            if ("ql_box" in functionName):
-#                #JJ you can try the startswith again. Sorry I was just trying stuff to get it run locally
-#                # but when you do it use those offsets plzzz =D
-#               if functionName == file[q_table_offset+1:q_table_offset+7] and file[pickle_offset-1:pickle_offset] == str(boxSize):
-#                   return True
-#            else:
-#                if (functionName in file):
-#                    return True
-
     return len(database)>0
 
 #File name based on furthest distance, nb_episodes (q_furthestDistance_numEpisode.pickle)
 #https://stackoverflow.com/questions/11218477/how-can-i-use-pickle-to-save-a-dict
 def saveQ(Q, num_episodes, functionName,boxSize=""):
-    # TODO: make num_episodes consider the previous number of episodes as well.
-    # For example, if initially done 10 episodes, num_episodes==10.
-    # If do 20 more episodes, num_episodes==30.
+    """
+    Saves a Q-table 
+    """
     if functionName == 'q_learning':
         with open('Q-tables/'+functionName + '_' +str(num_episodes)+'.pickle', 'wb') as handle:
             pickle.dump(Q, handle, protocol=2)
@@ -63,14 +51,18 @@ def saveQ(Q, num_episodes, functionName,boxSize=""):
             pickle.dump(Q, handle, protocol=2)
     print("Saved Q table succesfully for "+str(num_episodes)+" episodes!")
     return
+
 def loadQ(filename):
     with open(filename, 'rb') as handle:
         unserialized_data = pickle.load(handle)
     return unserialized_data
-#TODO if there is a better please change it :D
-#https://stackoverflow.com/questions/9492481/check-that-a-type-of-file-exists-in-python
-#returns max ep num as well so we can pick up where we left off.
+
+
 def loadLatestWith(functionName):
+    """ 
+    #https://stackoverflow.com/questions/9492481/check-that-a-type-of-file-exists-in-python
+    #returns max ep num as well so we can pick up where we left off.
+    """
     episode_stamps = []
     f_name = ''
     # for file in _glob.glob("*.pickle"):   #PYTHON2
@@ -92,10 +84,6 @@ def loadLatestWith(functionName):
             episode_stamps.append(int (e_stamp[:end_]) )
 
     max_e_stamp = str(max(episode_stamps))
-
-    #Why are we looping through twice??
-    #I looped to find the latest pickle then after we found That
-    # we load. There might be a way to load based on the most recent episode. We can look into it!
     for file in glob.glob("Q-tables/*.pickle"):
         if functionName in file and functionName=='q_learning':
             f_name = str(file)
@@ -125,26 +113,50 @@ def collectData(episode_num,reward,dist,epsilon,functionName):
     print("Saved Episode stats succesfully for "+str(episode_num)+" episodes!")
     return
 
-def saveBestActions(bestActions,functionName,boxSize=""):
+def saveBestActions(bestActions,functionName,boxSize="",bestDistance=0):
     """
-    Saves the best action for a maximum distance achieved.
+    Saves the best action for a maximum distance achieved and reward."
     """
     if functionName == 'q_learning':
-        with open('bestActions/'+functionName +'.pickle', 'wb') as handle:
+        with open('bestActions/'+functionName +'_'+str(bestDistance)+'.pickle', 'wb') as handle:
             pickle.dump(bestActions, handle, protocol=2)
     else:
-        with open('bestActions/'+functionName +'_'+str(boxSize)+'.pickle', 'wb') as handle:
+        with open('bestActions/'+functionName +'_'+str(bestDistance)+'_'+str(boxSize)+'.pickle', 'wb') as handle:
             pickle.dump(bestActions, handle, protocol=2)
-    print("Saved Best Actions succesfully.")
+    #print("Saved Best Actions succesfully.")
     return
 
 def loadBestAction(functionName):
+    distance_stamps = []
+    f_name = ''
+    for file in glob.glob("bestActions/*.pickle"):      
+        if functionName in file and functionName=='q_learning':
+            f_name = str(file).replace("bestActions/","",1)
+            #Most recent is defined as the one that makes it the furtherest distance.
+            f_name_offset = len(functionName)-1 # to get the index of where it starts
+            dist_stamp = f_name[f_name_offset+2:]
+            end_ = dist_stamp.index('_')
+            distance_stamps.append(int (dist_stamp[:end_]) )
+        elif functionName in file:
+            f_name = str(file).replace("bestActions/","",1)
+            box_num = f_name[-1]
+            #Most recent is defined as the one that makes it the furtherest distance.
+            f_name_offset = len(functionName)-1 # to get the index of where it starts
+            dist_stamp = f_name[f_name_offset+2:]
+            end_ = dist_stamp.index('_')
+            distance_stamps.append(int (dist_stamp[:end_]) )
+
+    max_e_stamp = str(max(distance_stamps))
     for file in glob.glob("bestActions/*.pickle"):
         if functionName in file and functionName=='q_learning':
             f_name = str(file)
-            
+            if max_e_stamp in f_name:
+                break
         elif functionName in file and box_num in file:
             f_name = str(file)
+            if max_e_stamp in f_name:
+                break
+   
            
     print("Loaded Best Actions: " + f_name)
     return loadQ(f_name) 

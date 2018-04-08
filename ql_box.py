@@ -24,10 +24,15 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
     
     funcName = "ql_box_size" + str(boxSize)
     epsilon = pu.getEpsilon(funcName)
-#    lastDist = pu.getLastDist(funcName)
-#    lastDistProp = lastDist/3266 #what proportion of the entire distance mario got last 3266 is the entire distance for stage 1
-#    epsilon = 1.0 - lastDistProp
-#    last_dist = pu.getLastDist(funcName)
+    
+    if pu.hasPickleWith('ql_box','2','bestActions/*pickle'):
+        bestActions,bestDistance,bestReward = pu.loadBestAction('ql_box')
+        useBA = True
+    else:
+        bestActions = []
+        bestDistance = -1
+        bestReward = 0
+        useBA = False
     
     
     
@@ -55,6 +60,8 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
 
     for episode in range(num_episodes):
         good_distance = False # A distance I deemed worthy.
+        useBA = True#at the start of each ep we want to use best actions, if none then explore til end of ep.
+        total_reward = bestReward
         print("Starting episode: ",episode)
         observation = env.reset()
         observation, reward, done, info = env.step(action)
@@ -77,56 +84,68 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
         for t in itertools.count():
             # generate a random num between 0 and 1 e.g. 0.35, 0.73 etc..
             # if the generated num is smaller than epsilon, we follow exploration policy
-            if np.random.random() <= epsilon:
-                # select a random action from set of all actions
-                # max_q_action = random.choice(Q[state].keys())      # PYTHON2
-                max_q_action = random.choice(list(Q[state].keys()))  # PYTHON3
-
-
-                action = action_dict[str(max_q_action)]
-            # if the generated num is greater than epsilon, we follow exploitation policy
+            if not useBA:
+                if np.random.random() <= epsilon:
+                    # select a random action from set of all actions
+                    # max_q_action = random.choice(Q[state].keys())      # PYTHON2
+                    max_q_action = random.choice(list(Q[state].keys()))  # PYTHON3
+    
+    
+                    action = action_dict[str(max_q_action)]
+                # if the generated num is greater than epsilon, we follow exploitation policy
+                else:
+                    # select an action with highest value for current state
+                    max_q_action = max(Q[state], key=(lambda key: Q[state][key]))
+                    # not fully sure about lambdas >.< https://stackoverflow.com/questions/268272/getting-key-with-maximum-value-in-dictionary
+                    action = action_dict[str(max_q_action)]
+                bestActions.append(action)
+                # apply selected action, collect values for next_state and reward
+                observation, reward, done, info = env.step(action)
+                total_reward+=reward
+               
+                #print("Qbox reward is: "+str(reward))
+                next_state = getBox(observation, boxSize)
+                Q.setdefault(next_state, {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0})
+                max_next_state_action = max(Q[next_state], key=lambda key: Q[next_state][key])
+                # Calculate the Q-learning target value
+                Q_target = reward + discount_factor * Q[next_state][max_next_state_action]
+                # Calculate the difference/error between target and current Q
+                Q_delta = Q_target - Q[state][str(max_q_action)]
+                # Update the Q table, alpha is the learning rate
+                Q[state][str(max_q_action)] = Q[state][str(max_q_action)] + (alpha * Q_delta)
+                state = next_state #last_episode+episode
             else:
-                # select an action with highest value for current state
-                max_q_action = max(Q[state], key=(lambda key: Q[state][key]))
-                # not fully sure about lambdas >.< https://stackoverflow.com/questions/268272/getting-key-with-maximum-value-in-dictionary
-
-                action = action_dict[str(max_q_action)]
-            # apply selected action, collect values for next_state and reward
+              if info['distance']< bestDistance:
+                   print("Using BA")
+                   for action in bestActions:
+                       observation, reward, done, info = env.step(action)
+                   useBA = False
+                   print("Not using BA, exploring.")
 
             if info['distance']%200==0:
                 good_distance = True
-            observation, reward, done, info = env.step(action)
-           
-            #print("Qbox reward is: "+str(reward))
-            next_state = getBox(observation, boxSize)
-            Q.setdefault(next_state, {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0})
-            max_next_state_action = max(Q[next_state], key=lambda key: Q[next_state][key])
-            # Calculate the Q-learning target value
-            Q_target = reward + discount_factor * Q[next_state][max_next_state_action]
-            # Calculate the difference/error between target and current Q
-            Q_delta = Q_target - Q[state][str(max_q_action)]
-            # Update the Q table, alpha is the learning rate
-            Q[state][str(max_q_action)] = Q[state][str(max_q_action)] + (alpha * Q_delta)
+            
+            
+            if (info['distance'] >= bestDistance) and (total_reward > bestReward):
+                bestDistance = info['distance']
+                pu.saveBestActions((bestActions,bestDistance,bestReward),'ql_box',boxSize=boxSize,bestDistance=bestDistance)
+
+            
+            
 
             # break if done, i.e. if end of this episode
             if done or info['distance']>=3266:
                 break
             # make the next_state into current state as we go for next iteration
-            state = next_state #last_episode+episode
-            #TODO check if distance is a float.
-         # gradualy decay the epsilon and everytime number of iterations is divisible by 50, decreas episilon by 1.5%
             
+            
+         # gradualy decay the epsilon and everytime number of iterations is divisible by 50, decreas episilon by 1.5%
         if epsilon > 0.26:
             if (last_episode%5 == 0) and (good_distance):
                 epsilon-= 0.0100#since this is rare,take off a huge randomness
             else:
                 epsilon -= 1.0/max_episode
-#        epsilon = 1.0
-#        for i in range(1,386):
-#            #print(epsilon,i)
-#            epsilon-= (1)/(max_episode)
-#        epsilon
-    #print("Epsilon is "+str(epsilon))
+
     
     ep_dist,ep_reward = info['distance'],info['total_reward'] #last recorded distance , last recorded reward from episodes
     pu.saveQ(Q, num_episodes + last_episode, functionName='ql_box',boxSize=boxSize)
