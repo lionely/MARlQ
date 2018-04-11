@@ -3,3 +3,5 @@
 history/
 *.pdf
 .DS_Store
+Q-tablesTrue
+bestActions/*.pickle

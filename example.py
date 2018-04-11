@@ -35,7 +35,7 @@ def playAsHuman(env):
 """params: [1]num of batches [2]num of episodes [3]box size"""
 if __name__ == "__main__":
     env = gym.make('SuperMarioBros-1-1-Tiles-v0')  # remember need to make the environment each time
-    #test_algorithm(env)
+    test_algorithm(env)
     if len(sys.argv) == 4:
         numBatches = int(sys.argv[1])
         numEpisodes = int(sys.argv[2])
