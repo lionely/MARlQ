@@ -36,7 +36,7 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
 
     else:
         # not sure if "0000000000003000000000000" is a correct initial box (state) that is comparable to 0
-        Q = {"0000000000003000000000000": {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0}}
+        Q = {"0000000000003000000000000": {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0,'R_JUMP': 0}}
         # the state "0000000000003000000000000" represents the box that looks as below
         # 00000
         # 00000
@@ -49,13 +49,14 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
                    'down':  [0, 0, 1, 0, 0, 0],
                    'R':     [0, 0, 0, 1, 0, 0],
                    'JUMP':  [0, 0, 0, 0, 1, 0],
-                   'B':     [0, 0, 0, 0, 0, 1]}
+                   'B':     [0, 0, 0, 0, 0, 1],
+                   'R_JUMP':[0, 0, 0, 1, 1, 0]}
 
 
     for episode in range(num_episodes):
         if pu.hasPickleWith('ql_box','2','bestActions/*pickle'):
             bestActions,bestDistance,bestReward = pu.loadBestAction('ql_box')
-            useBA = True
+            useBA = False
             
         else:
             bestActions = []
@@ -83,7 +84,7 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
        
         state = getBox(observation, boxSize)
 
-        Q.setdefault(state, {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0})
+        Q.setdefault(state, {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0, 'R_JUMP': 0})
 
         while not done:
             
@@ -110,37 +111,37 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
                
                 #print("Qbox reward is: "+str(reward))
                 next_state = getBox(observation, boxSize)
-                mario_loc = next_state.index('3')
-                if mario_loc!=  15 and next_state[mario_loc+1]=='1' and not done:#we will jump more and move right
-                    jump = [0, 0, 0, 0, 1, 0]
-                    right = [0, 0, 0, 1, 0, 0]
-                    jumpAndRight = [0, 0, 0, 1, 1, 0]
-                    #print('getting help.')
-                    
-                                    
-                    observation, reward, done, info = env.step(jump)
-                    bestActions.append(jump)
-                    observation, reward, done, info = env.step(jump)
-                    bestActions.append(jump)
-                    observation, reward, done, info = env.step(jump)
-                    bestActions.append(jump)
-                    observation, reward, done, info = env.step(jump)
-                    bestActions.append(jump)
-                    observation, reward, done, info = env.step(jump)
-                    bestActions.append(jump)
-                    observation, reward, done, info = env.step(jump)
-                    bestActions.append(jump)
-                    observation, reward, done, info = env.step(jumpAndRight)
-                    bestActions.append(jumpAndRight)
-                    observation, reward, done, info = env.step(jumpAndRight)
-                    bestActions.append(jumpAndRight)
-                    observation, reward, done, info = env.step(jumpAndRight)
-                    bestActions.append(jumpAndRight)
-                  
-                    next_state = getBox(observation, boxSize)
+                #mario_loc = next_state.index('3')
+#                if mario_loc!=  15 and next_state[mario_loc+1]=='1' and not done:#we will jump more and move right
+#                    jump = [0, 0, 0, 0, 1, 0]
+#                    right = [0, 0, 0, 1, 0, 0]
+#                    jumpAndRight = [0, 0, 0, 1, 1, 0]
+#                    #print('getting help.')
+#                    
+#                                    
+#                    observation, reward, done, info = env.step(jump)
+#                    bestActions.append(jump)
+#                    observation, reward, done, info = env.step(jump)
+#                    bestActions.append(jump)
+#                    observation, reward, done, info = env.step(jump)
+#                    bestActions.append(jump)
+#                    observation, reward, done, info = env.step(jump)
+#                    bestActions.append(jump)
+#                    observation, reward, done, info = env.step(jump)
+#                    bestActions.append(jump)
+#                    observation, reward, done, info = env.step(jump)
+#                    bestActions.append(jump)
+#                    observation, reward, done, info = env.step(jumpAndRight)
+#                    bestActions.append(jumpAndRight)
+#                    observation, reward, done, info = env.step(jumpAndRight)
+#                    bestActions.append(jumpAndRight)
+#                    observation, reward, done, info = env.step(jumpAndRight)
+#                    bestActions.append(jumpAndRight)
+#                  
+                #next_state = getBox(observation, boxSize)
                     
                 
-                Q.setdefault(next_state, {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0})
+                Q.setdefault(next_state, {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0,'R_JUMP': 0})
                 max_next_state_action = max(Q[next_state], key=lambda key: Q[next_state][key])
                 # Calculate the Q-learning target value
                 Q_target = reward + discount_factor * Q[next_state][max_next_state_action]
