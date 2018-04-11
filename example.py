@@ -13,19 +13,18 @@ from ql_box import *
 import sys
 #import itertools
 #import random
-#import wrappers 
+import wrappers
 
 #TODO Figure out how to stop mario from getting stuck.
 def playAsHuman(env, playTime=1000):
-    #TODO: make this work...!
     #TODO: make this run based on time and kill it after the time is over.
-    wrapper = wrappers.SetPlayingMode('human')
-    env = wrapper(env)
-    env.render()
-    #env.close()  # closes game
-
-#Should hold down jump, to be able to jump higher."
-    
+    cmd = input()
+    if cmd in 'hH':
+        wrapper = wrappers.SetPlayingMode('human')
+        env = wrapper(env)
+    elif cmd in 'aA':
+        wrapper = wrappers.SetPlayingMode('algo')
+        env = wrapper(env)
 
    
 #TODO collect total reward after every 5 episodes, max distance, episodes ran so far
@@ -33,7 +32,7 @@ def playAsHuman(env, playTime=1000):
 #params: [1]num of batches [2]num of episodes [3]box size
 if __name__ == "__main__":
     env = gym.make('SuperMarioBros-1-1-Tiles-v0')  # remember need to make the environment each time
-
+    # playAsHuman(env)
 
        
     # #Manually start
