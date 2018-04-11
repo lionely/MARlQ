@@ -10,6 +10,11 @@ import pickle_utilities as pu
 import numpy as np
 import itertools
 import random
+from time import sleep
+
+
+
+
 
 """Q-learning with box as a state. The box size will be 2 blocks away from Mario as a default.
 """
@@ -17,24 +22,13 @@ import random
 #TODO decrease eps based on (20000)- # of eps ran so far
 #worked on this instead of ql_box because accounting for a boxed (limited) environment means that the policy would not be a reinforced-learning?
 def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
-   
-   
+
     max_episode = 5000.0 #assuming we need at most 5,000 episodes
     last_episode = 0 #This is so we can run episodes in batches because running many at once takes a lot of time!
     
+    
     funcName = "ql_box_size" + str(boxSize)
     epsilon = pu.getEpsilon(funcName)
-    
-    if pu.hasPickleWith('ql_box','2','bestActions/*pickle'):
-        bestActions,bestDistance,bestReward = pu.loadBestAction('ql_box')
-        useBA = True
-    else:
-        bestActions = []
-        bestDistance = -1
-        bestReward = 0
-        useBA = False
-    
-    
     
     # call setdefault for a new state.
     if pu.hasPickleWith("ql_box",'2','Q-tables/*.pickle'):
@@ -59,13 +53,23 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
 
 
     for episode in range(num_episodes):
+        if pu.hasPickleWith('ql_box','2','bestActions/*pickle'):
+            bestActions,bestDistance,bestReward = pu.loadBestAction('ql_box')
+            useBA = True
+            
+        else:
+            bestActions = []
+            bestDistance = -1
+            bestReward = 0
+            useBA = False
+        
         good_distance = False # A distance I deemed worthy.
-        useBA = True#at the start of each ep we want to use best actions, if none then explore til end of ep.
+        #useBA = len(bestActions)>0#at the start of each ep we want to use best actions, if none then explore til end of ep.
         total_reward = bestReward
         print("Starting episode: ",episode)
         observation = env.reset()
         observation, reward, done, info = env.step(action)
-
+        
         marioPosY, marioPosX = np.where(observation == 3)   #mario position
 
         # in the beginning of the game, when mario's position is not set (that is we cannot get
@@ -76,12 +80,14 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
             observation, reward, done, info = env.step(action)
             marioPosY, marioPosX = np.where(observation == 3)
 
-
+       
         state = getBox(observation, boxSize)
 
         Q.setdefault(state, {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0})
 
-        for t in itertools.count():
+        while not done:
+            
+        #for t in itertools.count():
             # generate a random num between 0 and 1 e.g. 0.35, 0.73 etc..
             # if the generated num is smaller than epsilon, we follow exploration policy
             if not useBA:
@@ -89,8 +95,6 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
                     # select a random action from set of all actions
                     # max_q_action = random.choice(Q[state].keys())      # PYTHON2
                     max_q_action = random.choice(list(Q[state].keys()))  # PYTHON3
-    
-    
                     action = action_dict[str(max_q_action)]
                 # if the generated num is greater than epsilon, we follow exploitation policy
                 else:
@@ -101,10 +105,41 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
                 bestActions.append(action)
                 # apply selected action, collect values for next_state and reward
                 observation, reward, done, info = env.step(action)
+                currDistance = info['distance']
                 total_reward+=reward
                
                 #print("Qbox reward is: "+str(reward))
                 next_state = getBox(observation, boxSize)
+                mario_loc = next_state.index('3')
+                if mario_loc!=  15 and next_state[mario_loc+1]=='1' and not done:#we will jump more and move right
+                    jump = [0, 0, 0, 0, 1, 0]
+                    right = [0, 0, 0, 1, 0, 0]
+                    jumpAndRight = [0, 0, 0, 1, 1, 0]
+                    #print('getting help.')
+                    
+                                    
+                    observation, reward, done, info = env.step(jump)
+                    bestActions.append(jump)
+                    observation, reward, done, info = env.step(jump)
+                    bestActions.append(jump)
+                    observation, reward, done, info = env.step(jump)
+                    bestActions.append(jump)
+                    observation, reward, done, info = env.step(jump)
+                    bestActions.append(jump)
+                    observation, reward, done, info = env.step(jump)
+                    bestActions.append(jump)
+                    observation, reward, done, info = env.step(jump)
+                    bestActions.append(jump)
+                    observation, reward, done, info = env.step(jumpAndRight)
+                    bestActions.append(jumpAndRight)
+                    observation, reward, done, info = env.step(jumpAndRight)
+                    bestActions.append(jumpAndRight)
+                    observation, reward, done, info = env.step(jumpAndRight)
+                    bestActions.append(jumpAndRight)
+                  
+                    next_state = getBox(observation, boxSize)
+                    
+                
                 Q.setdefault(next_state, {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0})
                 max_next_state_action = max(Q[next_state], key=lambda key: Q[next_state][key])
                 # Calculate the Q-learning target value
@@ -113,31 +148,37 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
                 Q_delta = Q_target - Q[state][str(max_q_action)]
                 # Update the Q table, alpha is the learning rate
                 Q[state][str(max_q_action)] = Q[state][str(max_q_action)] + (alpha * Q_delta)
+                # make the next_state into current state as we go for next iteration
                 state = next_state #last_episode+episode
+
             else:
-              if info['distance']< bestDistance:
+              currDistance = info['distance']
+              if currDistance < (bestDistance-25):
                    print("Using BA")
                    for action in bestActions:
                        observation, reward, done, info = env.step(action)
+                       if currDistance>= bestDistance or done:#we should start exploring again 
+                           break
+                       currDistance = info['distance']
                    useBA = False
                    print("Not using BA, exploring.")
 
-            if info['distance']%200==0:
-                good_distance = True
             
             
+#            print('total reward is: ',total_reward)
+#            print('bestReward is: ',bestReward)
             if (info['distance'] >= bestDistance) and (total_reward > bestReward):
                 bestDistance = info['distance']
+                bestReward = total_reward
                 pu.saveBestActions((bestActions,bestDistance,bestReward),'ql_box',boxSize=boxSize,bestDistance=bestDistance)
-
-            
-            
 
             # break if done, i.e. if end of this episode
             if done or info['distance']>=3266:
+                pu.saveBestActions((bestActions,bestDistance,bestReward),'ql_box',boxSize=boxSize,bestDistance=bestDistance)
                 break
-            # make the next_state into current state as we go for next iteration
-            
+           
+            if info['distance']%200==0:
+                good_distance = True
             
          # gradualy decay the epsilon and everytime number of iterations is divisible by 50, decreas episilon by 1.5%
         if epsilon > 0.26:
@@ -168,10 +209,11 @@ def getBox(observation, boxSize):
     box = ""
     for i in range(-boxSize,boxSize+1):
         for j in range(-boxSize, boxSize+1):
-            currBoxPos = observation[marioPosY+i, marioPosX+j]
+            if(marioPosX+j)<16 and (marioPosY+i<13):
+                currBoxPos = observation[marioPosY+i, marioPosX+j]
 
 #                currBoxPos = currBoxPos.item(0)
-            box += str(currBoxPos)
+                box += str(currBoxPos)
 #    print(box)
     return box
 
@@ -226,8 +268,4 @@ def test_algorithm(env,boxSize=2,Q=None):
     env.close()
     return total_reward
 
-"""Possibly a helper function to test_algorithm"""
-def isStuck(stuck,capacity):
-    if len(stuck) == capacity:
-        stuck = []
-    return len(np.unique(stuck)) == 1
+

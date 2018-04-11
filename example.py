@@ -10,22 +10,19 @@ import gym
 import pickle_utilities as pu
 from ql_box import *
 import sys
-#import wrappers
+import wrappers
 
 #TODO Figure out how to stop mario from getting stuck.
-def playAsHuman(env, playTime=1000):
-    #TODO: make this work...!
-    #TODO: make this run based on time and kill it after the time is over.
-    wrapper = wrappers.SetPlayingMode('human')
-    env = wrapper(env)
-    env.render()
-    #env.close()  # closes game
+def playAsHuman(env):
+    cmd = raw_input()
+    if cmd == 'h' or cmd =='H':
+        wrapper = wrappers.SetPlayingMode('human')
+        env = wrapper(env)
+    elif cmd == 'a' or cmd =='A':
+        wrapper = wrappers.SetPlayingMode('algo')
+        env = wrapper(env)
+    
 
-#Should hold down jump, to be able to jump higher."
-
-
-
-#TODO collect total reward after every 5 episodes, max distance, episodes ran so far
 
 #note at 670, decrease max ep to 5000 after reading paper.
 #After 730, I changed the reward function to penality of 0.03 from 0.01
@@ -44,11 +41,12 @@ if __name__ == "__main__":
         numEpisodes = int(sys.argv[2])
         boxSizeEntered = int(sys.argv[3])
     else:
-        numBatches = 2
-        numEpisodes = 1
+        numBatches = 1
+        numEpisodes = 5
         boxSizeEntered = 2
     print('number of batches: ' + str(numBatches) + ', number of episodes: ' +
           str(numEpisodes) + ', box size: ' + str(boxSizeEntered))
     for i in range(numBatches):
         print(str(i*numEpisodes) + ' episodes have been run.')
+        
         Q = ql_box(env, numEpisodes, boxSize=boxSizeEntered)
