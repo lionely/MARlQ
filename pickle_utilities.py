@@ -22,22 +22,23 @@ def getLastDist(functionName):
     return lastDist    
 
 #TODO Is there a better way to search for extensions with pickle?
-def hasPickleWith(functionName, boxSize=""):
-    database = filter(os.path.isfile, glob.glob('Q-tables/*.pickle'))
-    if database:
-        for file in database:      
-            f_name = str(file).replace("Q-tables/","",1)
-            f_name = str(f_name).replace(".pickle", "", 1)
-            if ("box" in functionName):
-                if f_name.startswith(functionName) and f_name.endswith("_"+str(boxSize)):
-                    print("A previous pickle exists.")
-                    return True
-            else:
-                if (functionName in f_name):
-                    print("A previous pickle exists.")
-                    return True
-    print("No previous pickle exists.")
-    return False
+def hasPickleWith(functionName, boxSize="", path=''):
+    database = list(filter(os.path.isfile, glob.glob(path)))
+    return len(database) >0
+    # if database:
+    #     for file in database:
+    #         f_name = str(file).replace("Q-tables/","",1)
+    #         f_name = str(f_name).replace(".pickle", "", 1)
+    #         if ("box" in functionName):
+    #             if f_name.startswith(functionName) and f_name.endswith("_"+str(boxSize)):
+    #                 print("A previous pickle exists.")
+    #                 return True
+    #         else:
+    #             if (functionName in f_name):
+    #                 print("A previous pickle exists.")
+    #                 return True
+    # print("No previous pickle exists.")
+    # return False
 
 #File name based on furthest distance, nb_episodes (q_furthestDistance_numEpisode.pickle)
 #https://stackoverflow.com/questions/11218477/how-can-i-use-pickle-to-save-a-dict

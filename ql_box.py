@@ -32,22 +32,27 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
     funcName = "ql_box_size" + str(boxSize)
 
     # call setdefault for a new state.
-    if pu.hasPickleWith("ql_box", boxSize):
+    if pu.hasPickleWith("ql_box", boxSize, 'Q-tables/*.pickle'):
         Q,last_episode = pu.loadLatestWith("ql_box", boxSize)
     else:
         box = getDefaultBox(boxSize)
         # not sure if "0000000000003000000000000" is a correct initial box (state) that is comparable to 0
-        Q = {box: {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0}}
+        Q = {box: {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'R_JUMP1': 0, 'R_JUMP2': 0, 'R_JUMP3': 0}}
        
 
     
     action = [0, 0, 0, 0, 0, 0]  # Do nothing
-    action_dict = {'up':    [1, 0, 0, 0, 0, 0],
-                   'L':     [0, 1, 0, 0, 0, 0],
-                   'down':  [0, 0, 1, 0, 0, 0],
-                   'R':     [0, 0, 0, 1, 0, 0],
-                   'JUMP':  [0, 0, 0, 0, 1, 0],
-                   'B':     [0, 0, 0, 0, 0, 1]}
+    # remove 'B', which is irrelevant for clearing level 1
+    # add R_JUMP, which makes Mario jump and also go right at the same time
+    #   L add three times to make Mario prefer R_JUMP more than other actions
+    action_dict = {'up':        [1, 0, 0, 0, 0, 0],
+                   'L':         [0, 1, 0, 0, 0, 0],
+                   'down':      [0, 0, 1, 0, 0, 0],
+                   'R':         [0, 0, 0, 1, 0, 0],
+                   'JUMP':      [0, 0, 0, 0, 1, 0],
+                   'R_JUMP1':   [0, 0, 0, 1, 1, 0],
+                   'R_JUMP2':   [0, 0, 0, 1, 1, 0],
+                   'R_JUMP3':   [0, 0, 0, 1, 1, 0]}
 
     
     for episode in range(num_episodes):
@@ -55,15 +60,14 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
         epsilon_floor = 0.3
         epsilons = [0.7] * (int(TOTAL_DIST/100)+1)
         lastDist = pu.getLastDist(funcName)
-        epsilon_lastDist_i = int(lastDist/100)    
+        epsilon_lastDist_i = int(lastDist/100)
         #TODO: There might be a more effective way to do this!
         for i in range(epsilon_lastDist_i):
             if (epsilon_lastDist_i - i) > 4:
                 epsilons[i] = epsilon_floor
             else:
                 epsilons[i] -= 0.1 * (epsilon_lastDist_i - i)
-        print(epsilons) #DEBUG 
-        
+        print(epsilons) #DEBUG
         
         # Reset environment each episode
         print("Starting episode: ",episode)
@@ -83,12 +87,12 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
         
         state = getBox(observation, boxSize)
 
-        Q.setdefault(state, {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0})
+        Q.setdefault(state, {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'R_JUMP1': 0, 'R_JUMP2': 0, 'R_JUMP3': 0})
 
         for t in itertools.count():
             # Choose which epsilon depending on distance
             
-            epsilon_index = int(info['distance']/100)
+            epsilon_index = int(info['distance']/50)
             #print(epsilon_index)
             epsilon = epsilons[epsilon_index]
             
@@ -116,7 +120,8 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
            
             #print("Qbox reward is: "+str(reward))
             next_state = getBox(observation, boxSize)
-            Q.setdefault(next_state, {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0})
+
+            Q.setdefault(next_state, {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'R_JUMP1': 0, 'R_JUMP2': 0, 'R_JUMP3': 0})
             max_next_state_action = max(Q[next_state], key=lambda key: Q[next_state][key])
             # Calculate the Q-learning target value
             Q_target = reward + discount_factor * Q[next_state][max_next_state_action]
@@ -203,6 +208,7 @@ def getBox(observation, boxSize):
     return box
 
 #TODO: Added docustring but this function is not complete yet, will do after we clear level 1.
+#TODO: L what is this... I do not remember writing 'docustring' and all...
 """
 [2018-03-30 22:24:00,942] Making new env: SuperMarioBros-1-1-Tiles-v0
 Loaded: ql_box_150_3
@@ -223,7 +229,7 @@ KeyError: '0000000000000000100010003000000000000000021111111'
 
 """This function takes an environment and Q table and checks if the optimal actions
 at each state is actually being taken. """
-def test_algorithm(env,boxSize=2,Q=None):
+def test_algorithm(env,boxSize=3,Q=None):
     if not Q:
         Q = pu.loadLatestWith('ql_box', boxSize)[0]
     observation = env.reset()
@@ -238,13 +244,15 @@ def test_algorithm(env,boxSize=2,Q=None):
 
 
     state = getBox(observation, boxSize)
-   
-    action_dict = {'up':    [1, 0, 0 ,0, 0, 0],
-                   'L':     [0, 1, 0, 0, 0, 0],
-                   'down':  [0, 0, 1, 0, 0, 0],
-                   'R':     [0, 0, 0, 1, 0, 0],
-                   'JUMP':  [0, 0, 0, 0, 1, 0],
-                   'B':     [0, 0, 0, 0, 0, 1]}
+
+    action_dict = {'up': [1, 0, 0, 0, 0, 0],
+                   'L': [0, 1, 0, 0, 0, 0],
+                   'down': [0, 0, 1, 0, 0, 0],
+                   'R': [0, 0, 0, 1, 0, 0],
+                   'JUMP': [0, 0, 0, 0, 1, 0],
+                   'R_JUMP1': [0, 0, 0, 1, 1, 0],
+                   'R_JUMP2': [0, 0, 0, 1, 1, 0],
+                   'R_JUMP3': [0, 0, 0, 1, 1, 0]}
     for t in itertools.count():
         # selection the action with highest values i.e. best action
         max_q_action = max(Q[state], key=lambda key: Q[state][key])
@@ -269,6 +277,7 @@ def test_algorithm(env,boxSize=2,Q=None):
         #print("This stuck state has q values of: ", Q[state])
     env.close()
     return total_reward
+
 
 """Possibly a helper function to test_algorithm"""
 def isStuck(stuck,capacity):
