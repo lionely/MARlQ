@@ -15,7 +15,10 @@ Epsilon Policy:
 
             epsilon_index = int(info['distance']/100)
             #print(epsilon_index)
-            epsilon = epsilons[epsilon_index]
+            if epsilon_index >= len(epsilons):
+                epsilon = 0.7
+            else:
+                epsilon = epsilons[epsilon_index]
 
 Standing Penalty: True, 0.10
 
