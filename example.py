@@ -36,25 +36,30 @@ if __name__ == "__main__":
 
 
        
-    #Manually start
-    for i in range(1):
-        numEp = 1
-        print(str(i*numEp) + ' episodes have been run.')
-        Q = ql_box(env, numEp, boxSize=3)
+    # #Manually start
+    # for i in range(1):
+    #     numEp = 1
+    #     print(str(i*numEp) + ' episodes have been run.')
+    #     Q = ql_box(env, numEp, boxSize=3)
 
 
-    """
+
     #Run using terminal
-    numBatches = int(sys.argv[1])
-    numEpisodes = int(sys.argv[2])
-    boxSizeEntered = int(sys.argv[3])
-    
+    if len(sys.argv) == 4:
+        numBatches = int(sys.argv[1])
+        numEpisodes = int(sys.argv[2])
+        boxSizeEntered = int(sys.argv[3])
+    else:
+        numBatches = 1
+        numEpisodes = 5
+        boxSizeEntered = 3
     print('number of batches: ' + str(numBatches) + ', number of episodes: ' +
           str(numEpisodes) + ', box size: ' + str(boxSizeEntered))
+
     for i in range(numBatches):
         print(str(i*numEpisodes) + ' episodes have been run.')
         Q = ql_box(env, numEpisodes, boxSize=boxSizeEntered)
-    """
+
 
     
     
