@@ -34,14 +34,14 @@ def getEpsilon(functionName):
 
 def hasPickleWith(functionName, boxSize='',path=''):
     """This function checks to see if there exists pickle files. """
-    database = filter(os.path.isfile, glob.glob(path))
+    database = list(filter(os.path.isfile, glob.glob(path)))
     return len(database)>0
 
 #File name based on furthest distance, nb_episodes (q_furthestDistance_numEpisode.pickle)
 #https://stackoverflow.com/questions/11218477/how-can-i-use-pickle-to-save-a-dict
 def saveQ(Q, num_episodes, functionName,boxSize=""):
     """
-    Saves a Q-table 
+    Saves a Q-table
     """
     if functionName == 'q_learning':
         with open('Q-tables/'+functionName + '_' +str(num_episodes)+'.pickle', 'wb') as handle:
@@ -59,7 +59,7 @@ def loadQ(filename):
 
 
 def loadLatestWith(functionName):
-    """ 
+    """
     #https://stackoverflow.com/questions/9492481/check-that-a-type-of-file-exists-in-python
     #returns max ep num as well so we can pick up where we left off.
     """
@@ -129,7 +129,7 @@ def saveBestActions(bestActions,functionName,boxSize="",bestDistance=0):
 def loadBestAction(functionName):
     distance_stamps = []
     f_name = ''
-    for file in glob.glob("bestActions/*.pickle"):      
+    for file in glob.glob("bestActions/*.pickle"):
         if functionName in file and functionName=='q_learning':
             f_name = str(file).replace("bestActions/","",1)
             #Most recent is defined as the one that makes it the furtherest distance.
@@ -156,7 +156,7 @@ def loadBestAction(functionName):
             f_name = str(file)
             if max_e_stamp in f_name:
                 break
-   
-           
+
+
     print("Loaded Best Actions: " + f_name)
-    return loadQ(f_name) 
+    return loadQ(f_name)
