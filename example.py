@@ -7,7 +7,7 @@ Created on Fri Feb 16 11:26:15 2018
 """
 
 import gym
-#import numpy 
+#import numpy
 import pickle_utilities as pu
 from ql_box import *
 import sys
@@ -26,7 +26,7 @@ def playAsHuman(env, playTime=1000):
         wrapper = wrappers.SetPlayingMode('algo')
         env = wrapper(env)
 
-   
+
 #TODO collect total reward after every 5 episodes, max distance, episodes ran so far
 
 #params: [1]num of batches [2]num of episodes [3]box size
@@ -34,16 +34,16 @@ if __name__ == "__main__":
     env = gym.make('SuperMarioBros-1-1-Tiles-v0')  # remember need to make the environment each time
     # playAsHuman(env)
 
-       
+
     # #Manually start
     # for i in range(1):
     #     numEp = 1
     #     print(str(i*numEp) + ' episodes have been run.')
     #     Q = ql_box(env, numEp, boxSize=3)
 
-
-
-    #Run using terminal
+    # test_algorithm(env)
+    #
+    # Run using terminal
     if len(sys.argv) == 4:
         numBatches = int(sys.argv[1])
         numEpisodes = int(sys.argv[2])
@@ -58,7 +58,3 @@ if __name__ == "__main__":
     for i in range(numBatches):
         print(str(i*numEpisodes) + ' episodes have been run.')
         Q = ql_box(env, numEpisodes, boxSize=boxSizeEntered)
-
-
-    
-    
