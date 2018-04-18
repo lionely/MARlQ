@@ -78,7 +78,7 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
                 epsilon = info['distance']/700
             randomness_added_by_time += 0.0000001
             epsilon += randomness_added_by_time
-            print(epsilon)
+            # print(epsilon) # more memory usage
             if np.random.random() <= epsilon:
                 # select a random action from set of all actions
                 # max_q_action = random.choice(Q[state].keys())      # PYTHON2
