@@ -33,12 +33,12 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
 
     # call setdefault for a new state.
     if pu.hasPickleWith("ql_box", boxSize, 'Q-tables/*.pickle'):
-        Q,last_episode = pu.loadLatestWith("ql_box", boxSize)
+        Q, action_state_count, last_episode = pu.loadLatestWith("ql_box", boxSize)
     else:
         box = getDefaultBox(boxSize)
         # not sure if "0000000000003000000000000" is a correct initial box (state) that is comparable to 0
         Q = {box: {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'R_JUMP1': 0, 'R_JUMP2': 0, 'R_JUMP3': 0}}
-
+        action_state_count = {box: {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'R_JUMP1': 0, 'R_JUMP2': 0, 'R_JUMP3': 0}}
 
 
     action = [0, 0, 0, 0, 0, 0]  # Do nothing
@@ -88,6 +88,7 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
         state = getBox(observation, boxSize)
 
         Q.setdefault(state, {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'R_JUMP1': 0, 'R_JUMP2': 0, 'R_JUMP3': 0})
+        action_state_count.setdefault(state, {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'R_JUMP1': 0, 'R_JUMP2': 0, 'R_JUMP3': 0})
 
         for t in itertools.count():
             # Choose which epsilon depending on distance
@@ -125,6 +126,9 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
             next_state = getBox(observation, boxSize)
 
             Q.setdefault(next_state, {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'R_JUMP1': 0, 'R_JUMP2': 0, 'R_JUMP3': 0})
+            action_state_count(next_state, {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'R_JUMP1': 0, 'R_JUMP2': 0, 'R_JUMP3': 0})
+            action_state_count[state][str(max_q_action)] += 1
+
             max_next_state_action = max(Q[next_state], key=lambda key: Q[next_state][key])
             # Calculate the Q-learning target value
             Q_target = reward + discount_factor * Q[next_state][max_next_state_action]
@@ -133,25 +137,17 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
             # Update the Q table, alpha is the learning rate
             Q[state][str(max_q_action)] = Q[state][str(max_q_action)] + (alpha * Q_delta)
 
+
             # break if done, i.e. if end of this episode
             if done:
                 break
             # make the next_state into current state as we go for next iteration
             state = next_state
 
-
         ep_dist,ep_reward = info['distance'],info['total_reward'] #last recorded distance , last recorded reward from episodes
-        pu.saveQ(Q, episode + last_episode + 1, functionName='ql_box',boxSize=boxSize)
-        pu.collectData(episode + last_episode +1,ep_reward,ep_dist,functionName=funcName)
+        pu.saveQ(Q, action_state_count, episode + last_episode + 1, functionName='ql_box',boxSize=boxSize)
+        pu.collectData(episode + last_episode +1, ep_reward, ep_dist, functionName=funcName)
 
-        # decay epsilon according to the distance
-
-        #epsilon -= 1/5000
-
-    #TODO: ql_box's len(Q) != maximum distance (don't know what it represents) figure out a way to have consistancy between file names.
-    #ep_dist,ep_reward = info['distance'],info['total_reward'] #last recorded distance , last recorded reward from episodes
-    #pu.saveQ(Q, num_episodes + last_episode, functionName='ql_box',boxSize=boxSize)
-    #pu.collectData(num_episodes + last_episode,ep_reward,ep_dist,functionName=funcName)
     env.close()
     return Q  # return optimal Q
 
@@ -269,10 +265,6 @@ def test_algorithm(env,boxSize=3,Q=None):
         # calculate total reward
         total_reward += reward
 
-#        print('reward is ',reward)
-#        print(info['total_reward'])
-#        print('total_reward var ',total_reward)
-
         if done:
             print(total_reward)
             break
@@ -283,7 +275,7 @@ def test_algorithm(env,boxSize=3,Q=None):
 
 
 """Possibly a helper function to test_algorithm"""
-def isStuck(stuck,capacity):
+def isStuck(stuck, capacity):
     if len(stuck) == capacity:
         stuck = []
     return len(np.unique(stuck)) == 1

@@ -24,25 +24,11 @@ def getLastDist(functionName):
 #TODO Is there a better way to search for extensions with pickle?
 def hasPickleWith(functionName, boxSize="", path=''):
     database = list(filter(os.path.isfile, glob.glob(path)))
-    return len(database) >0
-    # if database:
-    #     for file in database:
-    #         f_name = str(file).replace("Q-tables/","",1)
-    #         f_name = str(f_name).replace(".pickle", "", 1)
-    #         if ("box" in functionName):
-    #             if f_name.startswith(functionName) and f_name.endswith("_"+str(boxSize)):
-    #                 print("A previous pickle exists.")
-    #                 return True
-    #         else:
-    #             if (functionName in f_name):
-    #                 print("A previous pickle exists.")
-    #                 return True
-    # print("No previous pickle exists.")
-    # return False
+    return len(database) > 0
 
 #File name based on furthest distance, nb_episodes (q_furthestDistance_numEpisode.pickle)
 #https://stackoverflow.com/questions/11218477/how-can-i-use-pickle-to-save-a-dict
-def saveQ(Q, num_episodes, functionName,boxSize=""):
+def saveQ(Q, action_state_count, num_episodes, functionName,boxSize=""):
     # TODO: make num_episodes consider the previous number of episodes as well.
     # For example, if initially done 10 episodes, num_episodes==10.
     # If do 20 more episodes, num_episodes==30.
@@ -51,7 +37,7 @@ def saveQ(Q, num_episodes, functionName,boxSize=""):
             pickle.dump(Q, handle, protocol=2)
     else:
         with open('Q-tables/'+functionName + '_'+str(num_episodes)+'_'+str(boxSize)+'.pickle', 'wb') as handle:
-            pickle.dump(Q, handle, protocol=2)
+            pickle.dump(Q, action_state_count, handle, protocol=2)
     print("Saved Q table succesfully for "+str(num_episodes)+" episodes!")
     return
 
@@ -59,6 +45,7 @@ def loadQ(filename):
     with open(filename, 'rb') as handle:
         unserialized_data = pickle.load(handle)
     return unserialized_data
+
 #TODO if there is a better please change it :D
 #https://stackoverflow.com/questions/9492481/check-that-a-type-of-file-exists-in-python
 #returns max ep num as well so we can pick up where w eleft off.
@@ -77,11 +64,6 @@ def loadLatestWith(functionName, boxSize=""):
             end_ = e_stamp.index('_')
             episode_stamps.append(int (e_stamp[:end_]) )
         elif functionName in file and f_name.endswith(str(boxSize)):
-            #f_name = str(file).replace("Q-tables/","",1)
-            #f_name = str(f_name).replace(".pickle", "", 1)
-            
-            #box_num = f_name[-1]
-            
             #Most recent is defined as the one that makes it the most episodes
             f_name_offset = len(functionName)-1 # to get the index of where it starts
             e_stamp = f_name[f_name_offset+2:]
@@ -90,10 +72,6 @@ def loadLatestWith(functionName, boxSize=""):
     #print("The stamps are: ",episode_stamps)
     max_e_stamp = str(max(episode_stamps))
 
-    #Why are we looping through twice??
-    #I looped to find the latest pickle then after we found That
-    # we load. There might be a way to load based on the most recent episode. We can look into it!
-    
     for file in glob.glob("Q-tables/*.pickle"):
         f_name = str(file).replace("Q-tables/","",1)
         f_name = str(f_name).replace(".pickle", "", 1)
@@ -104,7 +82,7 @@ def loadLatestWith(functionName, boxSize=""):
             if max_e_stamp in f_name[:-2] and f_name.endswith(str(boxSize)):
                 break
     print("Loaded: " + f_name)
-    return  (loadQ("Q-tables/"+f_name+".pickle") , int(max_e_stamp) )
+    return (loadQ("Q-tables/"+f_name+".pickle") , int(max_e_stamp) )
 
 """Saves a csv with Pandas"""
 def collectData(episode_num,reward,dist,functionName):
@@ -119,12 +97,3 @@ def collectData(episode_num,reward,dist,functionName):
 
     print("Saved Episode stats succesfully for "+str(episode_num)+" episodes!")
     return
-#log = {'episode_num': [100] ,'reward': [1000], 'dist': [1000]}
-#filename = 'reward_stats/'+'ql_box'+'_reward_stats.csv'
-#stats_df = pd.DataFrame(data=log)
-#if not os.path.isfile(filename):
-#       stats_df.to_csv(filename, sep=',', encoding='utf-8',index=False)
-#
-#stats = pd.read_csv(filename)
-#stats = stats.append(stats_df,ignore_index=True)
-#stats.to_csv(filename, sep=',', encoding='utf-8',index=False)
