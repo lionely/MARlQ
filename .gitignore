@@ -1,5 +1,5 @@
 .idea/
 *.pyc
 __pycache__
-cs229mario/*
+cs229mario
 wrappers/__pycache__/*
