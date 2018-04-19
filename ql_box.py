@@ -18,7 +18,7 @@ Mario as a default.
 """
 #worked on this instead of ql_box because accounting for a boxed (limited)
 #environment means that the policy would not be a reinforced-learning?
-def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
+def ql_box(env, num_episodes, learning_rate=0.85, discount_factor=0.99, boxSize=2):
     """(http://178.79.149.207/posts/cartpole-qlearning.html)
     alpha       learning rate
     epsilon     exploration rate
@@ -109,17 +109,22 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
                 # select a random action from set of all actions
                 # max_q_action = random.choice(Q[state].keys())      # PYTHON2
                 max_q_action = random.choice(list(Q[state].keys()))  # PYTHON3
-
-
                 action = action_dict[str(max_q_action)]
-            # if the generated num is greater than epsilon, we follow exploitation policy
+
+                # update count for the current state and action NOT sure if this should go after calculating alpha
+                action_state_count[state][str(max_q_action)] += 1
+                # if the generated num is greater than epsilon, we follow exploitation policy
             else:
                 # select an action with highest value for current state
                 max_q_action = max(Q[state], key=(lambda key: Q[state][key]))
+
                 # not fully sure about lambdas >.< https://stackoverflow.com/questions/268272/getting-key-with-maximum-value-in-dictionary
                 action = action_dict[str(max_q_action)]
 
-            # apply selected action, collect values for next_state and reward
+                # update count for the current state and action NOT sure if this should go after calculating alpha
+                action_state_count[state][str(max_q_action)] += 1
+
+                # apply selected action, collect values for next_state and reward
             observation, reward, done, info = env.step(action)
 
             #print("Qbox reward is: "+str(reward))
@@ -127,13 +132,15 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
 
             Q.setdefault(next_state, {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'R_JUMP1': 0, 'R_JUMP2': 0, 'R_JUMP3': 0})
             action_state_count.setdefault(next_state, {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'R_JUMP1': 0, 'R_JUMP2': 0, 'R_JUMP3': 0})
-            action_state_count[state][str(max_q_action)] += 1
+
 
             max_next_state_action = max(Q[next_state], key=lambda key: Q[next_state][key])
             # Calculate the Q-learning target value
             Q_target = reward + discount_factor * Q[next_state][max_next_state_action]
             # Calculate the difference/error between target and current Q
             Q_delta = Q_target - Q[state][str(max_q_action)]
+            # Calculate alpha
+            alpha = learning_rate / action_state_count[state][max_q_action]
             # Update the Q table, alpha is the learning rate
             Q[state][str(max_q_action)] = Q[state][str(max_q_action)] + (alpha * Q_delta)
 
