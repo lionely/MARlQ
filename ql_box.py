@@ -27,18 +27,24 @@ def ql_box(env, num_episodes, learning_rate=0.85, discount_factor=0.99, boxSize=
 
     # decaying epsilon, i.e we will divide num of episodes passed
     #epsilon = 1.0
-    last_episode = 0    # This is so we can run episodes in batches because
-                        # running many at once takes a lot of time!
+    last_episodeQ = 0
+    last_episodeASC = 0    # This is so we can run episodes in batches because
+                            # running many at once takes a lot of time!
     funcName = "ql_box_size" + str(boxSize)
 
     # call setdefault for a new state.
+    if pu.hasPickleWith("ql_box", boxSize, "ASC-tables/*.pickle"):
+        action_state_count, last_episodeASC = pu.loadLatestASCWith("ql_box", boxSize)
     if pu.hasPickleWith("ql_box", boxSize, 'Q-tables/*.pickle'):
-        Q, action_state_count, last_episode = pu.loadLatestWith("ql_box", boxSize)
+        Q, last_episodeQ = pu.loadLatestQWith("ql_box", boxSize)
+
     else:
         box = getDefaultBox(boxSize)
         # not sure if "0000000000003000000000000" is a correct initial box (state) that is comparable to 0
         Q = {box: {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'R_JUMP1': 0, 'R_JUMP2': 0, 'R_JUMP3': 0}}
         action_state_count = {box: {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'R_JUMP1': 0, 'R_JUMP2': 0, 'R_JUMP3': 0}}
+
+    last_episode = last_episodeQ if (last_episodeQ <= last_episodeASC) else last_episodeASC  # take the smaller episode
 
 
     action = [0, 0, 0, 0, 0, 0]  # Do nothing
@@ -152,11 +158,11 @@ def ql_box(env, num_episodes, learning_rate=0.85, discount_factor=0.99, boxSize=
             state = next_state
 
         ep_dist,ep_reward = info['distance'],info['total_reward'] #last recorded distance , last recorded reward from episodes
-        pu.saveQ(Q, action_state_count, episode + last_episode + 1, functionName='ql_box',boxSize=boxSize)
+        pu.saveQAndASC(Q, action_state_count, episode + last_episode + 1, functionName='ql_box',boxSize=boxSize)
         pu.collectData(episode + last_episode +1, ep_reward, ep_dist, functionName=funcName)
 
     env.close()
-    return Q  # return optimal Q
+    return Q, action_state_count  # return optimal Q table and action_state_count table
 
 """Returns a defalut box according to the size of the box."""
 def getDefaultBox(boxSize):

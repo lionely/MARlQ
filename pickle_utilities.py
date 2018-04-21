@@ -28,17 +28,21 @@ def hasPickleWith(functionName, boxSize="", path=''):
 
 #File name based on furthest distance, nb_episodes (q_furthestDistance_numEpisode.pickle)
 #https://stackoverflow.com/questions/11218477/how-can-i-use-pickle-to-save-a-dict
-def saveQ(Q, action_state_count, num_episodes, functionName,boxSize=""):
+def saveQAndASC(Q, action_state_count, num_episodes, functionName,boxSize=""):
     # TODO: make num_episodes consider the previous number of episodes as well.
     # For example, if initially done 10 episodes, num_episodes==10.
     # If do 20 more episodes, num_episodes==30.
     if functionName.startswith('q_learning'):
-        with open('Q-tables/'+functionName + '_' +str(num_episodes)+'.pickle', 'wb') as handle:
-            pickle.dump(Q, handle, protocol=2)
+        with open('Q-tables/'+functionName + '_' +str(num_episodes)+'.pickle', 'wb') as handleQ:
+            pickle.dump(obj=Q, file=handleQ, protocol=2)
+        with open('ASC-tables/' + functionName + '_' + str(num_episodes) + '.pickle', 'wb') as handleASC:
+            pickle.dump(obj=action_state_count, file=handleASC, protocol=2)
     else:
-        with open('Q-tables/'+functionName + '_'+str(num_episodes)+'_'+str(boxSize)+'.pickle', 'wb') as handle:
-            pickle.dump(Q, action_state_count, handle, protocol=2)
-    print("Saved Q table succesfully for "+str(num_episodes)+" episodes!")
+        with open('Q-tables/'+functionName + '_'+str(num_episodes)+'_'+str(boxSize)+'.pickle', 'wb') as handleQ:
+            pickle.dump(obj=Q, file=handleQ, protocol=2)
+        with open('ASC-tables/' + functionName + '_' + str(num_episodes) + '_' + str(boxSize) + '.pickle', 'wb') as handleASC:
+            pickle.dump(obj=action_state_count, file=handleASC, protocol=2)
+    print("Saved Q and action_state_count tables succesfully for "+str(num_episodes)+" episodes!")
     return
 
 def loadQ(filename):
@@ -46,10 +50,15 @@ def loadQ(filename):
         unserialized_data = pickle.load(handle)
     return unserialized_data
 
+def loadASC(filename):
+    with open(filename, 'rb') as handle:
+        unserialized_data = pickle.load(handle)
+    return unserialized_data
+
 #TODO if there is a better please change it :D
 #https://stackoverflow.com/questions/9492481/check-that-a-type-of-file-exists-in-python
 #returns max ep num as well so we can pick up where w eleft off.
-def loadLatestWith(functionName, boxSize=""):
+def loadLatestQWith(functionName, boxSize=""):
     episode_stamps = []
     f_name = ''
     # for file in _glob.glob("*.pickle"):   #PYTHON2
@@ -78,11 +87,47 @@ def loadLatestWith(functionName, boxSize=""):
         if functionName in f_name and functionName=='q_learning':
             if max_e_stamp in f_name:
                 break
-        elif functionName in f_name:            
+        elif functionName in f_name:
             if max_e_stamp in f_name[:-2] and f_name.endswith(str(boxSize)):
                 break
     print("Loaded: " + f_name)
     return (loadQ("Q-tables/"+f_name+".pickle") , int(max_e_stamp) )
+
+
+def loadLatestASCWith(functionName, boxSize=""):
+    episode_stamps = []
+    f_name = ''
+    # for file in _glob.glob("*.pickle"):   #PYTHON2
+    for file in glob.glob("ASC-tables/*.pickle"):      #PYTHON3    https://stackoverflow.com/questions/44366614/nameerror-name-glob-is-not-defined
+        f_name = str(file).replace("ASC-tables/","",1)
+        f_name = str(f_name).replace(".pickle", "", 1)
+        if functionName in f_name and functionName=='q_learning':
+            #f_name = str(file).replace("Q-tables/","",1)
+            #Most recent is defined as the one that makes it the most episodes
+            f_name_offset = len(functionName)-1 # to get the index of where it starts
+            e_stamp = f_name[f_name_offset+2:]
+            end_ = e_stamp.index('_')
+            episode_stamps.append(int (e_stamp[:end_]) )
+        elif functionName in file and f_name.endswith(str(boxSize)):
+            #Most recent is defined as the one that makes it the most episodes
+            f_name_offset = len(functionName)-1 # to get the index of where it starts
+            e_stamp = f_name[f_name_offset+2:]
+            end_ = e_stamp.index('_')
+            episode_stamps.append(int (e_stamp[:end_]) )
+    #print("The stamps are: ",episode_stamps)
+    max_e_stamp = str(max(episode_stamps))
+
+    for file in glob.glob("ASC-tables/*.pickle"):
+        f_name = str(file).replace("ASC-tables/","",1)
+        f_name = str(f_name).replace(".pickle", "", 1)
+        if functionName in f_name and functionName=='q_learning':
+            if max_e_stamp in f_name:
+                break
+        elif functionName in f_name:
+            if max_e_stamp in f_name[:-2] and f_name.endswith(str(boxSize)):
+                break
+    print("Loaded: " + f_name)
+    return (loadASC("ASC-tables/"+f_name+".pickle") , int(max_e_stamp) )
 
 """Saves a csv with Pandas"""
 def collectData(episode_num,reward,dist,functionName):
