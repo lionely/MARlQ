@@ -63,17 +63,7 @@ def ql_box(env, num_episodes, learning_rate=0.85, discount_factor=0.99, boxSize=
 
     for episode in range(num_episodes):
         ### Epsilon Policy ###
-        epsilon_floor = 0.3
-        epsilons = [0.7] * (int(TOTAL_DIST/100)+1)
-        lastDist = pu.getLastDist(funcName)
-        epsilon_lastDist_i = int(lastDist/100)
-        #TODO: There might be a more effective way to do this!
-        for i in range(epsilon_lastDist_i):
-            if (epsilon_lastDist_i - i) > 4:
-                epsilons[i] = epsilon_floor
-            else:
-                epsilons[i] -= 0.1 * (epsilon_lastDist_i - i)
-        print(epsilons) #DEBUG
+        epsilon = 0.3
 
         # Reset environment each episode
         print("Starting episode: ",episode)
@@ -97,20 +87,6 @@ def ql_box(env, num_episodes, learning_rate=0.85, discount_factor=0.99, boxSize=
         action_state_count.setdefault(state, {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'R_JUMP1': 0, 'R_JUMP2': 0, 'R_JUMP3': 0})
 
         for t in itertools.count():
-            # Choose which epsilon depending on distance
-
-            epsilon_index = int(info['distance']/50)
-            #print(epsilon_index)
-            if epsilon_index >= len(epsilons):  # to prevent IndexError in the hidden level
-                epsilon = 0.7
-            else:
-                epsilon = epsilons[epsilon_index]
-
-            # generate a random num between 0 and 1 e.g. 0.35, 0.73 etc..
-            # if the generated num is smaller than epsilon, we follow exploration policy
-
-            # epsilon = 0 # test
-
             if np.random.random() <= epsilon:
                 # select a random action from set of all actions
                 # max_q_action = random.choice(Q[state].keys())      # PYTHON2
