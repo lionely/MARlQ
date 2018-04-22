@@ -42,7 +42,7 @@ if __name__ == "__main__":
     #     Q = ql_box(env, numEp, boxSize=3)
 
     # test_algorithm(env)
-    #
+
     # Run using terminal
     if len(sys.argv) == 4:
         numBatches = int(sys.argv[1])

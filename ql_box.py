@@ -243,7 +243,7 @@ KeyError: '0000000000000000100010003000000000000000021111111'
 at each state is actually being taken. """
 def test_algorithm(env,boxSize=3,Q=None):
     if not Q:
-        Q = pu.loadLatestWith('ql_box', boxSize)[0]
+        Q = pu.loadLatestQWith('ql_box', boxSize)[0]
     observation = env.reset()
     total_reward = 0
     action = [0]*6
