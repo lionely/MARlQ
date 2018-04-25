@@ -217,24 +217,23 @@ def test_algorithm(env, boxSize=3, Q=None):
     for t in itertools.count():
         if np.random.random() <= 0.01:
             max_q_action = random.choice(list(Q[state].keys()))
-            action = action_dict[str(max_q_action)]
-
+            # max_q_action = 'R_JUMP1'
             print("***RANDOM***", end=" ")
 
         else:
             max_q_action = max(Q[state], key=(lambda key: Q[state][key]))
-            action = action_dict[str(max_q_action)]
-
-            print("***MAX_Q***", end=" ")
+            print("***MAX  Q***", end=" ")
 
         # if state is not found in the Q table due to the changing environment each episode, make mario R_JUMP
         if state not in Q:
-            action = 'R_JUMP1'
+            # max_q_action = 'R_JUMP1'
+            max_q_action = random.choice(list(Q[state].keys()))
             print("***FORCED***", end=" ")
 
+        action = action_dict[max_q_action]
         time = info['time']
         dist = info['distance']
-        print("TIME: ", time, "   DISTANCE: ", dist, "   ACTION: ", action, "   REWARD: ", total_reward, "(", reward, ")")
+        print("TIME: ", time, "   DISTANCE: ", dist, "   ACTION: ", max_q_action, "   REWARD: ", total_reward, "(", reward, ")")
 
         observation, reward, done,info = env.step(action)
         next_state = getBox(observation, boxSize)

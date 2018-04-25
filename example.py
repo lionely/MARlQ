@@ -32,7 +32,9 @@ def playAsHuman(env, playTime=1000):
 #params: [1]num of batches [2]num of episodes [3]box size
 if __name__ == "__main__":
     env = gym.make('SuperMarioBros-1-1-Tiles-v0')  # remember need to make the environment each time
-    # playAsHuman(env)
+
+
+
 
 
     # #Manually start
@@ -40,6 +42,8 @@ if __name__ == "__main__":
     #     numEp = 1
     #     print(str(i*numEp) + ' episodes have been run.')
     #     Q = ql_box(env, numEp, boxSize=3)
+
+
 
     test_algorithm(env)
 
