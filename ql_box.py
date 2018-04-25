@@ -179,57 +179,30 @@ def getBox(observation, boxSize):
     box = ""
     for i in range(-boxSize,boxSize+1):
         for j in range(-boxSize, boxSize+1):
-            #print("marioPosX: " + str(marioPosX) + ", marioPosY: " + str(marioPosY))
-            #print("marioPosX+j: " + str(marioPosX+j) + ", marioPosY+i: " + str(marioPosY+i))
-            #print("obs axis size: " + str(observation.shape[0]))
             if (((marioPosY+i) < 0 or (marioPosY+i) >= observation.shape[0]) or
                 ((marioPosX+j) < 0 or (marioPosX+j) >= observation.shape[1])):
-                # box is bigger than what is observable
                 currBoxPos = "0"
             else:
                 currBoxPos = observation[marioPosY+i, marioPosX+j]
 
-#                currBoxPos = currBoxPos.item(0)
             box += str(currBoxPos)
-#    print(box)
-    #print("box: " + box)
+
     return box
-
-#TODO: Added docustring but this function is not complete yet, will do after we clear level 1.
-#TODO: L what is this... I do not remember writing 'docustring' and all...
-"""
-[2018-03-30 22:24:00,942] Making new env: SuperMarioBros-1-1-Tiles-v0
-Loaded: ql_box_150_3
-Traceback (most recent call last):
-  File "/Users/JJ/Desktop/PyCharm CE.app/Contents/helpers/pydev/pydev_run_in_console.py", line 78, in <module>
-    globals = run_file(file, None, None)
-  File "/Users/JJ/Desktop/PyCharm CE.app/Contents/helpers/pydev/pydev_run_in_console.py", line 35, in run_file
-    pydev_imports.execfile(file, globals, locals)  # execute the script
-  File "/Users/JJ/Desktop/PyCharm CE.app/Contents/helpers/pydev/_pydev_imps/_pydev_execfile.py", line 18, in execfile
-    exec(compile(contents+"\n", file, 'exec'), glob, loc)
-  File "/Users/JJ/RoboticsProject/MARlQ/example.py", line 39, in <module>
-    test_algorithm(env, boxSize=3)
-  File "/Users/JJ/RoboticsProject/MARlQ/ql_box.py", line 229, in test_algorithm
-    max_q_action = max(Q[state], key=lambda key: Q[state][key])
-KeyError: '0000000000000000100010003000000000000000021111111'
-
-"""
 
 """This function takes an environment and Q table and checks if the optimal actions
 at each state is actually being taken. """
-def test_algorithm(env,boxSize=3,Q=None):
+def test_algorithm(env, boxSize=3, Q=None):
     if not Q:
         Q = pu.loadLatestQWith('ql_box', boxSize)[0]
     observation = env.reset()
     total_reward = 0
     action = [0]*6
-    observation,reward,done,info = env.step(action)
+    observation, reward, done, info = env.step(action)
     marioPosY, marioPosX = np.where(observation == 3)
     while marioPosX.size == 0:
             action = [0, 0, 0, 1, 0, 0]
             observation, reward, done, info = env.step(action)
             marioPosY, marioPosX = np.where(observation == 3)
-
 
     state = getBox(observation, boxSize)
 
@@ -242,23 +215,35 @@ def test_algorithm(env,boxSize=3,Q=None):
                    'R_JUMP2': [0, 0, 0, 1, 1, 0],
                    'R_JUMP3': [0, 0, 0, 1, 1, 0]}
     for t in itertools.count():
-        # selection the action with highest values i.e. best action
-        max_q_action = max(Q[state], key=lambda key: Q[state][key])
-        #print("Optimal action is: " + max_q_action)
-        action = action_dict[str(max_q_action)]
-        #print("Action is: " , action)
-        # apply selected action
+        if np.random.random() <= 0.01:
+            max_q_action = random.choice(list(Q[state].keys()))
+            action = action_dict[str(max_q_action)]
+
+            print("***RANDOM***", end=" ")
+
+        else:
+            max_q_action = max(Q[state], key=(lambda key: Q[state][key]))
+            action = action_dict[str(max_q_action)]
+
+            print("***MAX_Q***", end=" ")
+
+        # if state is not found in the Q table due to the changing environment each episode, make mario R_JUMP
+        if state not in Q:
+            action = 'R_JUMP1'
+            print("***FORCED***", end=" ")
+
+        time = info['time']
+        dist = info['distance']
+        print("TIME: ", time, "   DISTANCE: ", dist, "   ACTION: ", action, "   REWARD: ", total_reward, "(", reward, ")")
+
         observation, reward, done,info = env.step(action)
-        #print("Q-box reward: "+str(reward))
         next_state = getBox(observation, boxSize)
-        # calculate total reward
         total_reward += reward
 
         if done:
             print(total_reward)
             break
         state = next_state
-        #print("This stuck state has q values of: ", Q[state])
     env.close()
     return total_reward
 
