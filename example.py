@@ -37,8 +37,8 @@ if __name__ == "__main__":
     # test_algorithm(env)
     # print(Q)
 
-    numBatches = 50#int(sys.argv[1])
-    numEpisodes = 20#int(sys.argv[2])
+    numBatches = 2000#int(sys.argv[1])
+    numEpisodes = 5#int(sys.argv[2])
     boxSizeEntered = 3#int(sys.argv[3])
 
     print('number of batches: ' + str(numBatches) + ', number of episodes: ' +
