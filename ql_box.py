@@ -31,7 +31,7 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
     epsilon = pu.getEpsilon(funcName)
     
     # call setdefault for a new state.
-    if pu.hasPickleWith("ql_box",'2','Q-tables/*.pickle'):
+    if pu.hasPickleWith("ql_box",'2','QAndRewardsAndASC_box3_epsilonsByDistance_Alpha/*.pickle'):
         Q,last_episode = pu.loadLatestWith("ql_box")
 
     else:
@@ -148,7 +148,7 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
                 # Calculate the difference/error between target and current Q
                 Q_delta = Q_target - Q[state][str(max_q_action)]
                 # Update the Q table, alpha is the learning rate
-                Q[state][str(max_q_action)] = Q[state][str(max_q_action)] + (alpha * Q_delta)
+                # Q[state][str(max_q_action)] = Q[state][str(max_q_action)] + (alpha * Q_delta) #TODO: uncomment to update the Q Table
                 # make the next_state into current state as we go for next iteration
                 state = next_state #last_episode+episode
 
@@ -190,7 +190,7 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
 
     
     ep_dist,ep_reward = info['distance'],info['total_reward'] #last recorded distance , last recorded reward from episodes
-    pu.saveQ(Q, num_episodes + last_episode, functionName='ql_box',boxSize=boxSize)
+    # pu.saveQ(Q, num_episodes + last_episode, functionName='ql_box',boxSize=boxSize) #TODO: uncomment to save Q tables
     pu.collectData(num_episodes + last_episode,ep_reward,ep_dist,epsilon,functionName=funcName)
     env.close()
     return Q  # return optimal Q
