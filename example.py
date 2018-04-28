@@ -7,13 +7,13 @@ Created on Fri Feb 16 11:26:15 2018
 """
 
 import gym
-#import numpy
+#import numpy 
 import pickle_utilities as pu
 from ql_box import *
 import sys
 #import itertools
 #import random
-#import wrappers
+#import wrappers 
 
 #TODO Figure out how to stop mario from getting stuck.
 def playAsHuman(env, playTime=1000):
@@ -25,9 +25,9 @@ def playAsHuman(env, playTime=1000):
     #env.close()  # closes game
 
 #Should hold down jump, to be able to jump higher."
+    
 
-
-
+   
 #TODO collect total reward after every 5 episodes, max distance, episodes ran so far
 
 #params: [1]num of batches [2]num of episodes [3]box size
@@ -37,8 +37,8 @@ if __name__ == "__main__":
     # test_algorithm(env)
     # print(Q)
 
-    numBatches = 2000#int(sys.argv[1])
-    numEpisodes = 5#int(sys.argv[2])
+    numBatches = 50#int(sys.argv[1])
+    numEpisodes = 20#int(sys.argv[2])
     boxSizeEntered = 3#int(sys.argv[3])
 
     print('number of batches: ' + str(numBatches) + ', number of episodes: ' +
@@ -46,3 +46,4 @@ if __name__ == "__main__":
     for i in range(numBatches):
         print(str(i*numEpisodes) + ' episodes have been run.')
         Q = ql_box(env, numEpisodes, boxSize=boxSizeEntered)
+

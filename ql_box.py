@@ -20,7 +20,6 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
     last_episode = 0 #This is so we can run episodes in batches because running many at once takes a lot of time!
     funcName = "ql_box_size" + str(boxSize)
     lastDist = pu.getLastDist(funcName)
-    lastDistProp = lastDist/3266 #what proportion of the entire distance mario got last 3266 is the entire distance for stage 1
 
 
     #last_dist = pu.getLastDist(funcName)
@@ -42,14 +41,18 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
     box = getDefaultBox(boxSize)
     Q = {box: {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0}}
 
-
     action = [0, 0, 0, 0, 0, 0]  # Do nothing
-    action_dict = {'up':    [1, 0, 0, 0, 0, 0],
-                   'L':     [0, 1, 0, 0, 0, 0],
-                   'down':  [0, 0, 1, 0, 0, 0],
-                   'R':     [0, 0, 0, 1, 0, 0],
-                   'JUMP':  [0, 0, 0, 0, 1, 0],
-                   'B':     [0, 0, 0, 0, 0, 1]}
+    action_dict = {'up':      [1, 0, 0, 0, 0, 0],
+                   'L':       [0, 1, 0, 0, 0, 0],
+                   'down':    [0, 0, 1, 0, 0, 0],
+                   'R':       [0, 0, 0, 1, 0, 0],
+                   'JUMP':    [0, 0, 0, 0, 1, 0],
+                   'B':       [0, 0, 0, 0, 0, 1],
+                   'R_JUMP1': [0, 0, 0, 1, 1, 0],
+                   'R_JUMP2': [0, 0, 0, 1, 1, 0],
+                   'R_JUMP3': [0, 0, 0, 1, 1, 0],
+                   'R_JUMP4': [0, 0, 0, 1, 1, 0],
+                   'R_JUMP5': [0, 0, 0, 1, 1, 0]}
 
     
     for episode in range(num_episodes):
@@ -70,21 +73,22 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
 
         state = getBox(observation, boxSize)
 
-        Q.setdefault(state, {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0})
+        Q.setdefault(state, {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0, 'R_JUMP1': 0, 'R_JUMP2': 0, 'R_JUMP3': 0, 'R_JUMP4': 0, 'R_JUMP5': 0})
         randomness_added_by_time = 0
         for t in itertools.count():
             # generate a random num between 0 and 1 e.g. 0.35, 0.73 etc..
             # if the generated num is smaller than epsilon, we follow exploration policy
-            if info['distance'] < 520:
-                epsilon = info['distance'] / 8000
-            elif (520 <= info['distance']) and (info['distance'] < 575):
-                epsilon = info['distance']/1000
+            if info['distance'] < 650:
+                epsilon = 0
+            elif info['distance'] < 900:
+                epsilon = 0.3
             else:
                 epsilon = info['distance']/700
             randomness_added_by_time += 0.0000001
             epsilon += randomness_added_by_time
             # print(epsilon) # more memory usage
             if np.random.random() <= epsilon:
+
                 # select a random action from set of all actions
                 # max_q_action = random.choice(Q[state].keys())      # PYTHON2
                 max_q_action = random.choice(list(Q[state].keys()))  # PYTHON3
@@ -100,15 +104,16 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
                 action = action_dict[str(max_q_action)]
             # apply selected action, collect values for next_state and reward
 
-
             observation, reward, done, info = env.step(action)
            
             #print("Qbox reward is: "+str(reward))
             next_state = getBox(observation, boxSize)
 
+            Q.setdefault(next_state, {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0})
+
             # TODO: uncomment to update Q
-            # Q.setdefault(next_state, {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0})
             # max_next_state_action = max(Q[next_state], key=lambda key: Q[next_state][key])
+
             # # Calculate the Q-learning target value
             # Q_target = reward + discount_factor * Q[next_state][max_next_state_action]
             # # Calculate the difference/error between target and current Q
@@ -121,15 +126,14 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
                 break
             # make the next_state into current state as we go for next iteration
             state = next_state
-        # decay epsilon according to the distance
-        #epsilon = epsilon - 1/5000
 
-    #TODO: ql_box's len(Q) != maximum distance (don't know what it represents) figure out a way to have consistancy between file names.
+
     ep_dist,ep_reward = info['distance'],info['total_reward'] #last recorded distance , last recorded reward from episodes
 
     #TODO: uncomment to update Q
     # pu.saveQ(Q, num_episodes + last_episode, functionName='ql_box',boxSize=boxSize)
     #funcName = 'ql_box_size' + str(boxSize)
+
     pu.collectData(num_episodes + last_episode,ep_reward,ep_dist,functionName=funcName)
     env.close()
     return Q  # return optimal Q
@@ -195,6 +199,8 @@ at each state is actually being taken. """
 def test_algorithm(env,boxSize=3,Q=None):
     if not Q:
         Q = pu.loadLatestWith('ql_box', boxSize=3)[0]
+        # Q = pu.loadQ('Q-tables/ql_box_226_3.pickle')
+
     observation = env.reset()
     total_reward = 0
     action = [0]*6
@@ -208,21 +214,26 @@ def test_algorithm(env,boxSize=3,Q=None):
 
     state = getBox(observation, boxSize)
    
-    action_dict = {'up':    [1, 0, 0 ,0, 0, 0],
-                   'L':     [0, 1, 0, 0, 0, 0],
-                   'down':  [0, 0, 1, 0, 0, 0],
-                   'R':     [0, 0, 0, 1, 0, 0],
-                   'JUMP':  [0, 0, 0, 0, 1, 0],
-                   'B':     [0, 0, 0, 0, 0, 1]}
+    action_dict = {'up':      [1, 0, 0, 0, 0, 0],
+                   'L':       [0, 1, 0, 0, 0, 0],
+                   'down':    [0, 0, 1, 0, 0, 0],
+                   'R':       [0, 0, 0, 1, 0, 0],
+                   'JUMP':    [0, 0, 0, 0, 1, 0],
+                   'B':       [0, 0, 0, 0, 0, 1],
+                   'R_JUMP1': [0, 0, 0, 1, 1, 0],
+                   'R_JUMP2': [0, 0, 0, 1, 1, 0],
+                   'R_JUMP3': [0, 0, 0, 1, 1, 0],
+                   'R_JUMP4': [0, 0, 0, 1, 1, 0],
+                   'R_JUMP5': [0, 0, 0, 1, 1, 0]}
     for t in itertools.count():
         # selection the action with highest values i.e. best action
         max_q_action = max(Q[state], key=lambda key: Q[state][key])
-        #print("Optimal action is: " + max_q_action)
+        # print("Optimal action is: " + max_q_action)
         action = action_dict[str(max_q_action)]
-        #print("Action is: " , action)
+        # print("Action is: " , action)
         # apply selected action
         observation, reward, done,info = env.step(action)
-        #print("Q-box reward: "+str(reward))
+        # print("Q-box reward: "+str(reward))
         next_state = getBox(observation, boxSize)
         # calculate total reward
         total_reward += reward
