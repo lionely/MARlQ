@@ -35,14 +35,20 @@ def ql_box(env, num_episodes, learning_rate=0.85, discount_factor=0.99, boxSize=
     # call setdefault for a new state.
     if pu.hasPickleWith("ql_box", boxSize, "ASC-tables/*.pickle"):
         action_state_count, last_episodeASC = pu.loadLatestASCWith("ql_box", boxSize)
-    if pu.hasPickleWith("ql_box", boxSize, 'Q-tables/*.pickle'):
-        Q, last_episodeQ = pu.loadLatestQWith("ql_box", boxSize)
 
-    else:
-        box = getDefaultBox(boxSize)
-        # not sure if "0000000000003000000000000" is a correct initial box (state) that is comparable to 0
-        Q = {box: {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'R_JUMP1': 0, 'R_JUMP2': 0, 'R_JUMP3': 0}}
-        action_state_count = {box: {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'R_JUMP1': 0, 'R_JUMP2': 0, 'R_JUMP3': 0}}
+    # TODO: uncomment to update Q
+    # if pu.hasPickleWith("ql_box", boxSize, 'Q-tables/*.pickle'):
+    #     Q, last_episodeQ = pu.loadLatestQWith("ql_box", boxSize)
+    # else:
+    #     box = getDefaultBox(boxSize)
+    #     # not sure if "0000000000003000000000000" is a correct initial box (state) that is comparable to 0
+    #     Q = {box: {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'R_JUMP1': 0, 'R_JUMP2': 0, 'R_JUMP3': 0}}
+    #     action_state_count = {box: {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'R_JUMP1': 0, 'R_JUMP2': 0, 'R_JUMP3': 0}}
+
+    box = getDefaultBox(boxSize)
+    # not sure if "0000000000003000000000000" is a correct initial box (state) that is comparable to 0
+    Q = {box: {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'R_JUMP1': 0, 'R_JUMP2': 0, 'R_JUMP3': 0}}
+    action_state_count = {box: {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'R_JUMP1': 0, 'R_JUMP2': 0, 'R_JUMP3': 0}}
 
     last_episode = last_episodeQ if (last_episodeQ <= last_episodeASC) else last_episodeASC  # take the smaller episode
 
@@ -116,15 +122,17 @@ def ql_box(env, num_episodes, learning_rate=0.85, discount_factor=0.99, boxSize=
             action_state_count.setdefault(next_state, {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'R_JUMP1': 0, 'R_JUMP2': 0, 'R_JUMP3': 0})
 
 
-            max_next_state_action = max(Q[next_state], key=lambda key: Q[next_state][key])
-            # Calculate the Q-learning target value
-            Q_target = reward + discount_factor * Q[next_state][max_next_state_action]
-            # Calculate the difference/error between target and current Q
-            Q_delta = Q_target - Q[state][str(max_q_action)]
-            # Calculate alpha
-            alpha = learning_rate / action_state_count[state][max_q_action]
-            # Update the Q table, alpha is the learning rate
-            Q[state][str(max_q_action)] = Q[state][str(max_q_action)] + (alpha * Q_delta)
+
+            # TODO: uncomment to update Q
+            # max_next_state_action = max(Q[next_state], key=lambda key: Q[next_state][key])
+            # # Calculate the Q-learning target value
+            # Q_target = reward + discount_factor * Q[next_state][max_next_state_action]
+            # # Calculate the difference/error between target and current Q
+            # Q_delta = Q_target - Q[state][str(max_q_action)]
+            # # Calculate alpha
+            # alpha = learning_rate / action_state_count[state][max_q_action]
+            # # Update the Q table, alpha is the learning rate
+            # Q[state][str(max_q_action)] = Q[state][str(max_q_action)] + (alpha * Q_delta)
 
 
             # break if done, i.e. if end of this episode
@@ -134,7 +142,9 @@ def ql_box(env, num_episodes, learning_rate=0.85, discount_factor=0.99, boxSize=
             state = next_state
 
         ep_dist,ep_reward = info['distance'],info['total_reward'] #last recorded distance , last recorded reward from episodes
-        pu.saveQAndASC(Q, action_state_count, episode + last_episode + 1, functionName='ql_box',boxSize=boxSize)
+        # TODO: uncomment to update Q
+        # pu.saveQAndASC(Q, action_state_count, episode + last_episode + 1, functionName='ql_box',boxSize=boxSize)
+        pu.saveASC(action_state_count, episode + last_episode + 1, functionName='ql_box', boxSize=boxSize)
         pu.collectData(episode + last_episode +1, ep_reward, ep_dist, functionName=funcName)
 
     env.close()

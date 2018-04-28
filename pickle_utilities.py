@@ -45,6 +45,16 @@ def saveQAndASC(Q, action_state_count, num_episodes, functionName,boxSize=""):
     print("Saved Q and action_state_count tables succesfully for "+str(num_episodes)+" episodes!")
     return
 
+def saveASC(action_state_count, num_episodes, functionName, boxSize=""):
+    if functionName.startswith('q_learning'):
+        with open('ASC-tables/' + functionName + '_' + str(num_episodes) + '.pickle', 'wb') as handleASC:
+            pickle.dump(obj=action_state_count, file=handleASC, protocol=2)
+    else:
+        with open('ASC-tables/' + functionName + '_' + str(num_episodes) + '_' + str(boxSize) + '.pickle', 'wb') as handleASC:
+            pickle.dump(obj=action_state_count, file=handleASC, protocol=2)
+    print("Saved action_state_count tables succesfully for "+str(num_episodes)+" episodes!")
+    return
+
 def loadQ(filename):
     with open(filename, 'rb') as handle:
         unserialized_data = pickle.load(handle)
