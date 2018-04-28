@@ -57,17 +57,17 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
 
 
     for episode in range(num_episodes):
-        # if pu.hasPickleWith('ql_box','2','bestActions/*pickle'):
-        #     bestActions,bestDistance,bestReward = pu.loadBestAction('ql_box')
-        #     useBA = False
-        #
-        # else:
-        #     bestActions = []
-        #     bestDistance = -1
-        #     bestReward = 0
-        #     useBA = False
+        if pu.hasPickleWith('ql_box','2','bestActions/*pickle'):
+            bestActions,bestDistance,bestReward = pu.loadBestAction('ql_box')
+            useBA = False
+
+        else:
+            bestActions = []
+            bestDistance = -1
+            bestReward = 0
+            useBA = False
         
-        # good_distance = False # A distance I deemed worthy.
+        good_distance = False # A distance I deemed worthy.
         #useBA = len(bestActions)>0#at the start of each ep we want to use best actions, if none then explore til end of ep.
         # total_reward = bestReward
         total_reward = 0
@@ -89,7 +89,6 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
         state = getBox(observation, boxSize)
 
         Q.setdefault(state, {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0, 'R_JUMP': 0})
-        useBA = False #TODO: for non-Qtable updating
 
         while not done:
             
@@ -108,7 +107,7 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
                     max_q_action = max(Q[state], key=(lambda key: Q[state][key]))
                     # not fully sure about lambdas >.< https://stackoverflow.com/questions/268272/getting-key-with-maximum-value-in-dictionary
                     action = action_dict[str(max_q_action)]
-                # bestActions.append(action)
+                bestActions.append(action)
                 # apply selected action, collect values for next_state and reward
                 observation, reward, done, info = env.step(action)
                 currDistance = info['distance']
@@ -158,25 +157,25 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
                 state = next_state #last_episode+episode
 
             else:
-              currDistance = info['distance']
-              # if currDistance < (bestDistance-25):
-              #      print("Using BA")
-              #      for action in bestActions:
-              #          observation, reward, done, info = env.step(action)
-              #          if currDistance>= bestDistance or done:#we should start exploring again
-              #              break
-              #          currDistance = info['distance']
-              #      useBA = False
-              #      print("Not using BA, exploring.")
+                currDistance = info['distance']
+                if currDistance < (bestDistance-25):
+                   print("Using BA")
+                   for action in bestActions:
+                       observation, reward, done, info = env.step(action)
+                       if currDistance>= bestDistance or done:#we should start exploring again
+                           break
+                       currDistance = info['distance']
+                   useBA = False
+                   print("Not using BA, exploring.")
 
             
             
-#            print('total reward is: ',total_reward)
-#            print('bestReward is: ',bestReward)
-#             if (info['distance'] >= bestDistance) and (total_reward > bestReward):
-#                 bestDistance = info['distance']
-#                 bestReward = total_reward
-                # pu.saveBestActions((bestActions,bestDistance,bestReward),'ql_box',boxSize=boxSize,bestDistance=bestDistance)
+            # print('total reward is: ',total_reward)
+            # print('bestReward is: ',bestReward)
+            if (info['distance'] >= bestDistance) and (total_reward > bestReward):
+                bestDistance = info['distance']
+                bestReward = total_reward
+                pu.saveBestActions((bestActions,bestDistance,bestReward),'ql_box',boxSize=boxSize,bestDistance=bestDistance)
 
             # break if done, i.e. if end of this episode
             if done or info['distance']>=3266:
@@ -186,7 +185,7 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
             if info['distance']%200==0:
                 good_distance = True
             
-         # gradualy decay the epsilon and everytime number of iterations is divisible by 50, decreas episilon by 1.5%
+        # gradualy decay the epsilon and everytime number of iterations is divisible by 50, decreas episilon by 1.5%
         if epsilon > 0.26:
             if (last_episode%5 == 0) and (good_distance):
                 epsilon-= 0.0100#since this is rare,take off a huge randomness
