@@ -23,10 +23,10 @@ def getLastDist(functionName):
 
 #TODO Is there a better way to search for extensions with pickle?
 def hasPickleWith(functionName, boxSize=""):
-    database = filter(os.path.isfile, glob.glob('Q-tables/*.pickle'))
+    database = filter(os.path.isfile, glob.glob('QAndRewardsAndASC_box3_epsilonsByDistance_Alpha/*.pickle'))
     if database:
         for file in database:      
-            f_name = str(file).replace("Q-tables/","",1)
+            f_name = str(file).replace("QAndRewardsAndASC_box3_epsilonsByDistance_Alpha/","",1)
             f_name = str(f_name).replace(".pickle", "", 1)
             if ("box" in functionName):
                 if f_name.startswith(functionName) and f_name.endswith("_"+str(boxSize)):
@@ -46,10 +46,10 @@ def saveQ(Q, num_episodes, functionName,boxSize=""):
     # For example, if initially done 10 episodes, num_episodes==10.
     # If do 20 more episodes, num_episodes==30.
     if functionName == 'q_learning':
-        with open('Q-tables/'+functionName + '_' +str(num_episodes)+'.pickle', 'wb') as handle:
+        with open('QAndRewardsAndASC_box3_epsilonsByDistance_Alpha/'+functionName + '_' +str(num_episodes)+'.pickle', 'wb') as handle:
             pickle.dump(Q, handle, protocol=2)
     else:
-        with open('Q-tables/'+functionName + '_'+str(num_episodes)+'_'+str(boxSize)+'.pickle', 'wb') as handle:
+        with open('QAndRewardsAndASC_box3_epsilonsByDistance_Alpha/'+functionName + '_'+str(num_episodes)+'_'+str(boxSize)+'.pickle', 'wb') as handle:
             pickle.dump(Q, handle, protocol=2)
     print("Saved Q table succesfully for "+str(num_episodes)+" episodes!")
     return
@@ -64,8 +64,8 @@ def loadLatestWith(functionName, boxSize=""):
     episode_stamps = []
     f_name = ''
     # for file in _glob.glob("*.pickle"):   #PYTHON2
-    for file in glob.glob("Q-tables/*.pickle"):      #PYTHON3    https://stackoverflow.com/questions/44366614/nameerror-name-glob-is-not-defined
-        f_name = str(file).replace("Q-tables/","",1)
+    for file in glob.glob("QAndRewardsAndASC_box3_epsilonsByDistance_Alpha/*.pickle"):      #PYTHON3    https://stackoverflow.com/questions/44366614/nameerror-name-glob-is-not-defined
+        f_name = str(file).replace("QAndRewardsAndASC_box3_epsilonsByDistance_Alpha/","",1)
         f_name = str(f_name).replace(".pickle", "", 1)
         if functionName in f_name and functionName=='q_learning':
             #f_name = str(file).replace("Q-tables/","",1)
@@ -92,8 +92,8 @@ def loadLatestWith(functionName, boxSize=""):
     #I looped to find the latest pickle then after we found That
     # we load. There might be a way to load based on the most recent episode. We can look into it!
 
-    for file in glob.glob("Q-tables/*.pickle"):
-        f_name = str(file).replace("Q-tables/","",1)
+    for file in glob.glob("QAndRewardsAndASC_box3_epsilonsByDistance_Alpha/*.pickle"):
+        f_name = str(file).replace("QAndRewardsAndASC_box3_epsilonsByDistance_Alpha/","",1)
         f_name = str(f_name).replace(".pickle", "", 1)
         if functionName in f_name and functionName=='q_learning':
             if max_e_stamp in f_name:
@@ -102,7 +102,7 @@ def loadLatestWith(functionName, boxSize=""):
             if max_e_stamp in f_name[:-2] and f_name.endswith(str(boxSize)):
                 break
     print("Loaded: " + f_name)
-    return  (loadQ("Q-tables/"+f_name+".pickle") , int(max_e_stamp) )
+    return  (loadQ("QAndRewardsAndASC_box3_epsilonsByDistance_Alpha/"+f_name+".pickle") , int(max_e_stamp) )
 
 """Saves a csv with Pandas"""
 def collectData(episode_num,reward,dist,functionName):

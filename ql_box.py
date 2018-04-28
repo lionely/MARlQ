@@ -26,18 +26,23 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
     #last_dist = pu.getLastDist(funcName)
     
     
-    
-    # call setdefault for a new state.
-    if pu.hasPickleWith("ql_box", boxSize):
-        Q,last_episode = pu.loadLatestWith("ql_box", boxSize)
-        #print("Has a previous pickle.")
+    #TODO: uncomment to update Q
+    # # call setdefault for a new state.
+    # if pu.hasPickleWith("ql_box", boxSize):
+    #     Q,last_episode = pu.loadLatestWith("ql_box", boxSize)
+    #     #print("Has a previous pickle.")
+    #
+    # else:
+    #     #print("No previous pickle exists.")
+    #     box = getDefaultBox(boxSize)
+    #     # not sure if "0000000000003000000000000" is a correct initial box (state) that is comparable to 0
+    #     Q = {box: {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0}}
 
-    else:
-        #print("No previous pickle exists.")
-        box = getDefaultBox(boxSize)
-        # not sure if "0000000000003000000000000" is a correct initial box (state) that is comparable to 0
-        Q = {box: {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0}}
-        
+    # TODO: Delete to update Q
+    box = getDefaultBox(boxSize)
+    Q = {box: {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0}}
+
+
     action = [0, 0, 0, 0, 0, 0]  # Do nothing
     action_dict = {'up':    [1, 0, 0, 0, 0, 0],
                    'L':     [0, 1, 0, 0, 0, 0],
@@ -100,14 +105,16 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
            
             #print("Qbox reward is: "+str(reward))
             next_state = getBox(observation, boxSize)
-            Q.setdefault(next_state, {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0})
-            max_next_state_action = max(Q[next_state], key=lambda key: Q[next_state][key])
-            # Calculate the Q-learning target value
-            Q_target = reward + discount_factor * Q[next_state][max_next_state_action]
-            # Calculate the difference/error between target and current Q
-            Q_delta = Q_target - Q[state][str(max_q_action)]
-            # Update the Q table, alpha is the learning rate
-            Q[state][str(max_q_action)] = Q[state][str(max_q_action)] + (alpha * Q_delta)
+
+            # TODO: uncomment to update Q
+            # Q.setdefault(next_state, {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'B': 0})
+            # max_next_state_action = max(Q[next_state], key=lambda key: Q[next_state][key])
+            # # Calculate the Q-learning target value
+            # Q_target = reward + discount_factor * Q[next_state][max_next_state_action]
+            # # Calculate the difference/error between target and current Q
+            # Q_delta = Q_target - Q[state][str(max_q_action)]
+            # # Update the Q table, alpha is the learning rate
+            # Q[state][str(max_q_action)] = Q[state][str(max_q_action)] + (alpha * Q_delta)
 
             # break if done, i.e. if end of this episode
             if done:
@@ -119,7 +126,9 @@ def ql_box(env, num_episodes, alpha=0.85, discount_factor=0.99, boxSize=2):
 
     #TODO: ql_box's len(Q) != maximum distance (don't know what it represents) figure out a way to have consistancy between file names.
     ep_dist,ep_reward = info['distance'],info['total_reward'] #last recorded distance , last recorded reward from episodes
-    pu.saveQ(Q, num_episodes + last_episode, functionName='ql_box',boxSize=boxSize)
+
+    #TODO: uncomment to update Q
+    # pu.saveQ(Q, num_episodes + last_episode, functionName='ql_box',boxSize=boxSize)
     #funcName = 'ql_box_size' + str(boxSize)
     pu.collectData(num_episodes + last_episode,ep_reward,ep_dist,functionName=funcName)
     env.close()
