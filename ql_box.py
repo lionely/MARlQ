@@ -27,7 +27,8 @@ def ql_box(env, num_episodes, learning_rate=0.85, discount_factor=0.99, boxSize=
 
     # decaying epsilon, i.e we will divide num of episodes passed
     #epsilon = 1.0
-    last_episodeQ = 0
+    #TODO: uncomment to update Q
+    # last_episodeQ = 0
     last_episodeASC = 0    # This is so we can run episodes in batches because
                             # running many at once takes a lot of time!
     funcName = "ql_box_size" + str(boxSize)
@@ -50,7 +51,9 @@ def ql_box(env, num_episodes, learning_rate=0.85, discount_factor=0.99, boxSize=
     Q = {box: {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'R_JUMP1': 0, 'R_JUMP2': 0, 'R_JUMP3': 0}}
     action_state_count = {box: {'up': 0, 'L': 0, 'down': 0, 'R': 0, 'JUMP': 0, 'R_JUMP1': 0, 'R_JUMP2': 0, 'R_JUMP3': 0}}
 
-    last_episode = last_episodeQ if (last_episodeQ <= last_episodeASC) else last_episodeASC  # take the smaller episode
+    #TODO: uncomment to update Q
+    # last_episode = last_episodeQ if (last_episodeQ <= last_episodeASC) else last_episodeASC  # take the smaller episode
+    last_episode = last_episodeASC
 
 
     action = [0, 0, 0, 0, 0, 0]  # Do nothing
