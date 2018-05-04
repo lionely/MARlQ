@@ -218,7 +218,7 @@ def test_algorithm(env, boxSize=3, Q=None):
             marioPosY, marioPosX = np.where(observation == 3)
 
     state = getBox(observation, boxSize)
-
+    #Standing penalty is -0.10 currently
     action_dict = {'up': [1, 0, 0, 0, 0, 0],
                    'L': [0, 1, 0, 0, 0, 0],
                    'down': [0, 0, 1, 0, 0, 0],
@@ -228,20 +228,17 @@ def test_algorithm(env, boxSize=3, Q=None):
                    'R_JUMP2': [0, 0, 0, 1, 1, 0],
                    'R_JUMP3': [0, 0, 0, 1, 1, 0]}
     for t in itertools.count():
-        if np.random.random() <= 0.01:
-            max_q_action = random.choice(list(Q[state].keys()))
-            # max_q_action = 'R_JUMP1'
-            print("***RANDOM***", end=" ")
-
+        if state not in Q.keys():
+            # if state is not found in the Q table due to the changing environment each episode, make mario take a random action
+            max_q_action = random.choice(list(action_dict.keys()))
+            print("***UNSEEN STATE***", end=" ")
         else:
-            max_q_action = max(Q[state], key=(lambda key: Q[state][key]))
-            print("***MAX  Q***", end=" ")
-
-        # if state is not found in the Q table due to the changing environment each episode, make mario R_JUMP
-        if state not in Q:
-            # max_q_action = 'R_JUMP1'
-            max_q_action = random.choice(list(Q[state].keys()))
-            print("***FORCED***", end=" ")
+            if np.random.random() <= 0.01:
+                max_q_action = random.choice(list(Q[state].keys()))
+                print("***   RANDOM   ***", end=" ")
+            else:
+                max_q_action = max(Q[state], key=(lambda key: Q[state][key]))
+                print("***   MAX Q    ***", end=" ")
 
         action = action_dict[max_q_action]
         time = info['time']

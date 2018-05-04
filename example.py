@@ -32,33 +32,32 @@ def playAsHuman(env, playTime=1000):
 #params: [1]num of batches [2]num of episodes [3]box size
 if __name__ == "__main__":
     env = gym.make('SuperMarioBros-1-1-Tiles-v0')  # remember need to make the environment each time
-
-
-
-
-
+    ###################################
+    ###      Run Test Algorithm     ###
+    ###################################
+    Q = pu.loadQ('Q-tables/ql_box_1_3.pickle')
+    test_algorithm(env=env, boxSize=3, Q=Q)
+    ###################################
+    ###       Run Experiments       ###
+    ###################################
     # #Manually start
     # for i in range(1):
     #     numEp = 1
     #     print(str(i*numEp) + ' episodes have been run.')
     #     Q = ql_box(env, numEp, boxSize=3)
 
-
-
-    # test_algorithm(env)
-
     # Run using terminal
-    if len(sys.argv) == 4:
-        numBatches = int(sys.argv[1])
-        numEpisodes = int(sys.argv[2])
-        boxSizeEntered = int(sys.argv[3])
-    else:
-        numBatches = 1
-        numEpisodes = 5
-        boxSizeEntered = 3
-    print('number of batches: ' + str(numBatches) + ', number of episodes: ' +
-          str(numEpisodes) + ', box size: ' + str(boxSizeEntered))
-
-    for i in range(numBatches):
-        print(str(i*numEpisodes) + ' episodes have been run.')
-        Q, ASC = ql_box(env, numEpisodes, boxSize=boxSizeEntered)
+    # if len(sys.argv) == 4:
+    #     numBatches = int(sys.argv[1])
+    #     numEpisodes = int(sys.argv[2])
+    #     boxSizeEntered = int(sys.argv[3])
+    # else:
+    #     numBatches = 1
+    #     numEpisodes = 5
+    #     boxSizeEntered = 3
+    # print('number of batches: ' + str(numBatches) + ', number of episodes: ' +
+    #       str(numEpisodes) + ', box size: ' + str(boxSizeEntered))
+    #
+    # for i in range(numBatches):
+    #     print(str(i*numEpisodes) + ' episodes have been run.')
+    #     Q, ASC = ql_box(env, numEpisodes, boxSize=boxSizeEntered)

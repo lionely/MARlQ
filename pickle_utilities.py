@@ -19,7 +19,7 @@ def getLastDist(functionName):
     df = pd.read_csv(filename)
     lastDist = df.iloc[-1]['dist']
     print("Last distance is: " + str(lastDist))
-    return lastDist    
+    return lastDist
 
 #TODO Is there a better way to search for extensions with pickle?
 def hasPickleWith(functionName, boxSize="", path=''):
@@ -58,6 +58,7 @@ def saveASC(action_state_count, num_episodes, functionName, boxSize=""):
 def loadQ(filename):
     with open(filename, 'rb') as handle:
         unserialized_data = pickle.load(handle)
+    print("Loaded: ", filename)
     return unserialized_data
 
 def loadASC(filename):
