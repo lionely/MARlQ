@@ -35,7 +35,9 @@ if __name__ == "__main__":
     ###################################
     ###      Run Test Algorithm     ###
     ###################################
-    Q = pu.loadQ('Q-tables/ql_box_1_3.pickle')
+    if len(sys.argv) == 2:
+        episode_input = sys.argv[1]
+    Q = pu.loadQ('Q-tables/ql_box_'+episode_input+'_3.pickle')
     test_algorithm(env=env, boxSize=3, Q=Q)
     ###################################
     ###       Run Experiments       ###
